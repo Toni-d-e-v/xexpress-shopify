@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useFetcher } from "react-router";
+import { useFetcher, useLoaderData } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 
 export const loader = async ({ request }) => {
@@ -88,7 +88,7 @@ export default function XExpressHome() {
           <s-list-item>
             <s-link
               href="/app/xexpress/settings"
-              onClick={(event) => navigate(event, "/app/xexpress/settings")}
+              onClick={() => navigate("/app/xexpress/settings")}
             >
               API Settings
             </s-link>
@@ -96,7 +96,7 @@ export default function XExpressHome() {
           <s-list-item>
             <s-link
               href="/app/xexpress/create"
-              onClick={(event) => navigate(event, "/app/xexpress/create")}
+              onClick={() => navigate("/app/xexpress/create")}
             >
               Create Shipment
             </s-link>
