@@ -1,13 +1,15 @@
-import { useLoaderData, useFetcher } from "react-router";
-import type { LoaderFunctionArgs, ActionFunctionArgs } from "react-router";
-import { Page, Card, Layout, TextField, Select, Button } from "@shopify/polaris";
-import { useState, useCallback, useEffect } from "react";
-
-import prisma from "../db.server";
-import shopify from "../shopify.server";
+import { useEffect, useState } from "react";
+import { useFetcher, useLoaderData } from "react-router";
+import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
+import { boundary } from "@shopify/shopify-app-react-router/server";
 
 // Loader – učita konfiguraciju
 export async function loader({ request }: LoaderFunctionArgs) {
+  const [{ default: prisma }, { default: shopify }] = await Promise.all([
+    import("../db.server"),
+    import("../shopify.server"),
+  ]);
+
   const { session } = await shopify.authenticate.admin(request);
   const shop = session.shop;
 
@@ -20,20 +22,25 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 // Action – spremi konfiguraciju
 export async function action({ request }: ActionFunctionArgs) {
+  const [{ default: prisma }, { default: shopify }] = await Promise.all([
+    import("../db.server"),
+    import("../shopify.server"),
+  ]);
+
   const { session } = await shopify.authenticate.admin(request);
   const shop = session.shop;
 
   const form = await request.formData();
 
   const data = {
-    xUsername: form.get("xUsername") as string,
-    xPassword: form.get("xPassword") as string,
+    xUsername: (form.get("xUsername") as string) || "",
+    xPassword: (form.get("xPassword") as string) || "",
     environment: (form.get("environment") as string) || "test",
-    senderName: form.get("senderName") as string,
-    senderAddress: form.get("senderAddress") as string,
-    senderPostal: form.get("senderPostal") as string,
-    senderPhone: form.get("senderPhone") as string,
-    senderContact: form.get("senderContact") as string,
+    senderName: (form.get("senderName") as string) || "",
+    senderAddress: (form.get("senderAddress") as string) || "",
+    senderPostal: (form.get("senderPostal") as string) || "",
+    senderPhone: (form.get("senderPhone") as string) || "",
+    senderContact: (form.get("senderContact") as string) || "",
   };
 
   await prisma.shopConfig.upsert({
@@ -50,7 +57,6 @@ export default function XExpressSettingsPage() {
   const { config } = useLoaderData() as any;
   const fetcher = useFetcher();
 
-  // Controlled Polaris form state
   const [formState, setFormState] = useState({
     xUsername: config?.xUsername ?? "",
     xPassword: config?.xPassword ?? "",
@@ -62,97 +68,96 @@ export default function XExpressSettingsPage() {
     senderContact: config?.senderContact ?? "",
   });
 
-  const handleChange = useCallback(
-    (field: string) => (value: string) => {
-      setFormState((prev) => ({ ...prev, [field]: value }));
-    },
-    []
-  );
+  useEffect(() => {
+    if (fetcher.state === "idle" && fetcher.data?.success) {
+      window?.shopify?.toast?.show?.("Settings saved");
+    }
+  }, [fetcher.state, fetcher.data]);
+
+  const handleChange = (field: string) => (event: any) => {
+    const value = event?.target?.value ?? "";
+    setFormState((prev) => ({ ...prev, [field]: value }));
+  };
 
   return (
-    <Page title="X-Express Settings">
-      <Layout>
-        <Layout.Section>
+    <s-page heading="X-Express Settings">
+      <s-section heading="API credentials">
+        <fetcher.Form method="post">
+          <s-stack spacing="base">
+            <s-text-field
+              name="xUsername"
+              label="Username"
+              value={formState.xUsername}
+              onInput={handleChange("xUsername")}
+              required
+            />
+            <s-text-field
+              name="xPassword"
+              type="password"
+              label="Password"
+              value={formState.xPassword}
+              onInput={handleChange("xPassword")}
+              required
+            />
+            <s-select
+              name="environment"
+              label="Environment"
+              value={formState.environment}
+              onInput={handleChange("environment")}
+            >
+              <option value="test">Test</option>
+              <option value="prod">Production</option>
+            </s-select>
+          </s-stack>
 
-          <fetcher.Form method="post">
+          <s-divider spacing="base" />
 
-            <Card title="X-Express API credentials" sectioned>
-              <TextField
-                label="Username"
-                name="xUsername"
-                autoComplete="off"
-                value={formState.xUsername}
-                onChange={handleChange("xUsername")}
-              />
+          <s-stack spacing="base">
+            <s-text-field
+              name="senderName"
+              label="Sender name"
+              value={formState.senderName}
+              onInput={handleChange("senderName")}
+            />
+            <s-text-field
+              name="senderAddress"
+              label="Sender address"
+              value={formState.senderAddress}
+              onInput={handleChange("senderAddress")}
+            />
+            <s-text-field
+              name="senderPostal"
+              label="Sender postal code"
+              value={formState.senderPostal}
+              onInput={handleChange("senderPostal")}
+            />
+            <s-text-field
+              name="senderPhone"
+              label="Sender phone"
+              value={formState.senderPhone}
+              onInput={handleChange("senderPhone")}
+            />
+            <s-text-field
+              name="senderContact"
+              label="Sender contact"
+              value={formState.senderContact}
+              onInput={handleChange("senderContact")}
+            />
+          </s-stack>
 
-              <TextField
-                label="Password"
-                name="xPassword"
-                type="password"
-                autoComplete="off"
-                value={formState.xPassword}
-                onChange={handleChange("xPassword")}
-              />
-
-              <Select
-                label="Environment"
-                name="environment"
-                options={[
-                  { label: "Test", value: "test" },
-                  { label: "Production", value: "prod" },
-                ]}
-                value={formState.environment}
-                onChange={handleChange("environment")}
-              />
-            </Card>
-
-            <Card title="Default sender info" sectioned>
-              <TextField
-                label="Sender name"
-                name="senderName"
-                value={formState.senderName}
-                onChange={handleChange("senderName")}
-              />
-
-              <TextField
-                label="Sender address"
-                name="senderAddress"
-                value={formState.senderAddress}
-                onChange={handleChange("senderAddress")}
-              />
-
-              <TextField
-                label="Sender postal code"
-                name="senderPostal"
-                value={formState.senderPostal}
-                onChange={handleChange("senderPostal")}
-              />
-
-              <TextField
-                label="Sender phone"
-                name="senderPhone"
-                value={formState.senderPhone}
-                onChange={handleChange("senderPhone")}
-              />
-
-              <TextField
-                label="Sender contact person"
-                name="senderContact"
-                value={formState.senderContact}
-                onChange={handleChange("senderContact")}
-              />
-            </Card>
-
-            <div style={{ marginTop: "1rem" }}>
-              <Button submit primary>
-                Save
-              </Button>
-            </div>
-
-          </fetcher.Form>
-
-        </Layout.Section>
-      </Layout>
-    </Page>
+          <s-inline-stack alignment="end" spacing="base" style={{ marginTop: "16px" }}>
+            <s-button
+              variant="primary"
+              submit
+              {...(fetcher.state === "submitting" ? { loading: true } : {})}
+            >
+              Save
+            </s-button>
+          </s-inline-stack>
+        </fetcher.Form>
+      </s-section>
+    </s-page>
   );
 }
+
+export const headers = (headersArgs: any) => boundary.headers(headersArgs);
