@@ -18,7 +18,14 @@ export const loader = async ({ request }) => {
 
 export default function App() {
   const { apiKey } = useLoaderData();
-  const navigate = useNavigate();
+
+  const handleSettingsClick = () => {
+    if (window?.shopify?.redirect?.to) {
+      window.shopify.redirect.to({ url: "/app/xexpress/settings" });
+      return;
+    }
+    window.location.href = "/app/xexpress/settings";
+  };
 
   return (
     <AppBridgeProvider apiKey={apiKey} isEmbeddedApp>
@@ -27,7 +34,9 @@ export default function App() {
           <s-stack direction="inline" gap="base" alignment="center">
             <s-text variant="headingLg">X-Express</s-text>
             <s-spacer></s-spacer>
-            <Link to="/app/xexpress/settings">Settings</Link>
+            <s-link onClick={handleSettingsClick} href="/app/xexpress/settings">
+              Settings
+            </s-link>
           </s-stack>
         </s-section>
         <Outlet />
