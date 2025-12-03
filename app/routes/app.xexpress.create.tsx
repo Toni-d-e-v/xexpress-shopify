@@ -1,6 +1,6 @@
 // app/routes/app.xexpress.create.tsx
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
-import { useFetcher, useLoaderData } from "react-router";
+import { useFetcher, useLoaderData, Link } from "react-router";
 import { useEffect } from "react";
 import prisma from "../db.server";
 import shopify from "../shopify.server";
@@ -140,16 +140,11 @@ export default function CreateShipmentPage() {
             <s-text tone="critical">
               Configure your X-Express credentials first.
             </s-text>
-            <s-button
-              variant="primary"
-              onClick={() =>
-                window?.shopify?.redirect?.to
-                  ? window.shopify.redirect.to({ url: "/app/xexpress/settings" })
-                  : (window.location.href = "/app/xexpress/settings")
-              }
-            >
-              Go to settings
-            </s-button>
+            <Link to="/app/xexpress/settings" style={{ textDecoration: 'none' }}>
+              <s-button variant="primary">
+                Go to settings
+              </s-button>
+            </Link>
           </s-inline-stack>
         )}
 
