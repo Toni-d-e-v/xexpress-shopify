@@ -28,11 +28,7 @@ export default function XExpressHome() {
 
   const runTest = () => fetcher.submit({}, { method: "POST" });
 
-  const navigate = (event, url) => {
-    if (event?.preventDefault) {
-      event.preventDefault();
-    }
-
+  const navigate = (url) => {
     if (window?.shopify?.redirect?.to) {
       window.shopify.redirect.to({ url });
       return;
@@ -53,11 +49,11 @@ export default function XExpressHome() {
         </s-paragraph>
 
         <s-stack direction="inline" gap="base">
-          <s-button onClick={(event) => navigate(event, "/app/xexpress/settings")}>
+          <s-button onClick={() => navigate("/app/xexpress/settings")}> 
             Settings
           </s-button>
 
-          <s-button onClick={(event) => navigate(event, "/app/xexpress/create")}>
+          <s-button onClick={() => navigate("/app/xexpress/create")}> 
             Create Shipment
           </s-button>
 

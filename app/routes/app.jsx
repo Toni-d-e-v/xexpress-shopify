@@ -1,8 +1,10 @@
-import { Link, Outlet, useLoaderData, useRouteError } from "react-router";
+import { Outlet, useLoaderData, useRouteError } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import {
   AppProvider as AppBridgeProvider,
 } from "@shopify/shopify-app-react-router/react";
+
+import { addDocumentResponseHeaders, authenticate } from "../shopify.server";
 
 export const loader = async ({ request }) => {
   const { authenticate } = await import("../shopify.server");
@@ -16,12 +18,16 @@ export default function App() {
 
   return (
     <AppBridgeProvider apiKey={apiKey} isEmbeddedApp>
-      <ui-nav-menu>
-        <Link to="/app">Home</Link>
-        <Link to="/app/xexpress/settings">Settings</Link>
-        <Link to="/app/xexpress/create">Create shipment</Link>
-      </ui-nav-menu>
-      <Outlet />
+      <s-page>
+        <s-section>
+          <s-stack direction="inline" gap="base" alignment="center">
+            <s-text variant="headingLg">X-Express</s-text>
+            <s-spacer></s-spacer>
+            <Link to="/app/xexpress/settings">Settings</Link>
+          </s-stack>
+        </s-section>
+        <Outlet />
+      </s-page>
     </AppBridgeProvider>
   );
 }
@@ -31,7 +37,4 @@ export function ErrorBoundary() {
 }
 
 export const headers = (headersArgs) => boundary.headers(headersArgs);
-export async function documentHeaderTemplate(...args) {
-  const { addDocumentResponseHeaders } = await import("../shopify.server");
-  return addDocumentResponseHeaders(...args);
-}
+export const documentHeaderTemplate = addDocumentResponseHeaders;
