@@ -4,8 +4,6 @@ import {
   AppProvider as AppBridgeProvider,
 } from "@shopify/shopify-app-react-router/react";
 
-import { addDocumentResponseHeaders, authenticate } from "../shopify.server";
-
 export const loader = async ({ request }) => {
   const { authenticate } = await import("../shopify.server");
   await authenticate.admin(request);
@@ -50,4 +48,3 @@ export function ErrorBoundary() {
 }
 
 export const headers = (headersArgs) => boundary.headers(headersArgs);
-export const documentHeaderTemplate = addDocumentResponseHeaders;
