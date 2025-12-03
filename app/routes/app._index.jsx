@@ -81,10 +81,20 @@ export default function XExpressHome() {
       <s-section slot="aside" heading="Quick Links">
         <s-unordered-list>
           <s-list-item>
-            <s-link href="/app/xexpress/settings">API Settings</s-link>
+            <s-link
+              href="/app/xexpress/settings"
+              onClick={(event) => navigate(event, "/app/xexpress/settings")}
+            >
+              API Settings
+            </s-link>
           </s-list-item>
           <s-list-item>
-            <s-link href="/app/xexpress/create">Create Shipment</s-link>
+            <s-link
+              href="/app/xexpress/create"
+              onClick={(event) => navigate(event, "/app/xexpress/create")}
+            >
+              Create Shipment
+            </s-link>
           </s-list-item>
           <s-list-item>
             <s-link
