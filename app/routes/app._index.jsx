@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { useFetcher } from "react-router";
-import { useAppBridge } from "@shopify/app-bridge-react";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
 
@@ -18,16 +17,24 @@ export const action = async ({ request }) => {
 
 export default function XExpressHome() {
   const fetcher = useFetcher();
-  const shopify = useAppBridge();
 
 
   useEffect(() => {
     if (fetcher.data?.ok) {
-      shopify.toast.show("Test successful");
+      window?.shopify?.toast?.show?.("Test successful");
     }
-  }, [fetcher.data, shopify]);
+  }, [fetcher.data]);
 
   const runTest = () => fetcher.submit({}, { method: "POST" });
+
+  const navigate = (url) => {
+    if (window?.shopify?.redirect?.to) {
+      window.shopify.redirect.to({ url });
+      return;
+    }
+
+    window.location.href = url;
+  };
 
   return (
     <s-page heading="X-Express Shipping">
@@ -41,11 +48,11 @@ export default function XExpressHome() {
         </s-paragraph>
 
         <s-stack direction="inline" gap="base">
-          <s-button onClick={() => (window.location.href = "/app/xexpress/settings")}>
+          <s-button onClick={() => navigate("/app/xexpress/settings")}> 
             Settings
           </s-button>
 
-          <s-button onClick={() => (window.location.href = "/app/xexpress/create")}>
+          <s-button onClick={() => navigate("/app/xexpress/create")}> 
             Create Shipment
           </s-button>
 

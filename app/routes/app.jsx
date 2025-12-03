@@ -4,10 +4,7 @@ import {
   AppProvider as AppBridgeProvider,
 } from "@shopify/shopify-app-react-router/react";
 
-import { AppProvider as PolarisProvider } from "@shopify/polaris";
-import enTranslations from "@shopify/polaris/locales/en.json";
-
-import { authenticate } from "../shopify.server";
+import { addDocumentResponseHeaders, authenticate } from "../shopify.server";
 
 export const loader = async ({ request }) => {
   await authenticate.admin(request);
@@ -20,15 +17,16 @@ export default function App() {
 
   return (
     <AppBridgeProvider apiKey={apiKey} isEmbeddedApp>
-      <PolarisProvider i18n={enTranslations}>
-
-        {/* SAFE NAVIGATION BAR */}
-        <nav style={{ padding: "12px", borderBottom: "1px solid #eee" }}>
-          <Link to="/app/xexpress/settings">Settings</Link>
-        </nav>
-
+      <s-page>
+        <s-section>
+          <s-stack direction="inline" gap="base" alignment="center">
+            <s-text variant="headingLg">X-Express</s-text>
+            <s-spacer></s-spacer>
+            <Link to="/app/xexpress/settings">Settings</Link>
+          </s-stack>
+        </s-section>
         <Outlet />
-      </PolarisProvider>
+      </s-page>
     </AppBridgeProvider>
   );
 }
@@ -38,3 +36,4 @@ export function ErrorBoundary() {
 }
 
 export const headers = (headersArgs) => boundary.headers(headersArgs);
+export const documentHeaderTemplate = addDocumentResponseHeaders;
