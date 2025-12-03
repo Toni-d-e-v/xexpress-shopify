@@ -1,0 +1,64 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model ShopConfig {
+  id            Int      @id @default(autoincrement())
+  shop          String   @unique
+
+  xUsername     String?
+  xPassword     String?
+  environment   String   @default("test") // "test" ili "prod"
+
+  senderName    String?
+  senderAddress String?
+  senderPostal  String?
+  senderPhone   String?
+  senderContact String?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Shipment {
+  id          Int      @id @default(autoincrement())
+  shop        String
+  orderId     String
+  orderName   String
+
+  sifraExt    String
+  sifra       String?
+
+  status      String?
+  trackingRaw Json?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Session {
+  id            String   @id
+  shop          String
+  state         String
+  isOnline      Boolean
+  scope         String?
+  expires       DateTime?
+  accessToken   String?
+  userId        BigInt?
+
+  firstName     String?
+  lastName      String?
+  email         String?
+  accountOwner  Boolean?
+  locale        String?
+  collaborator  Boolean?
+  emailVerified Boolean?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
