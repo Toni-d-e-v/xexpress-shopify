@@ -5,7 +5,11 @@ import { boundary } from "@shopify/shopify-app-react-router/server";
 export const loader = async ({ request }) => {
   const { authenticate } = await import("../shopify.server");
   await authenticate.admin(request);
-  return null;
+
+  const url = new URL(request.url);
+  const host = url.searchParams.get("host") || "";
+
+  return { host };
 };
 
 export const action = async ({ request }) => {
@@ -17,6 +21,7 @@ export const action = async ({ request }) => {
 };
 
 export default function XExpressHome() {
+  const { host } = useLoaderData() ?? { host: "" };
   const fetcher = useFetcher();
 
 

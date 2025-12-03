@@ -10,7 +10,10 @@ export const loader = async ({ request }) => {
   const { authenticate } = await import("../shopify.server");
   await authenticate.admin(request);
 
-  return { apiKey: process.env.SHOPIFY_API_KEY || "" };
+  const url = new URL(request.url);
+  const host = url.searchParams.get("host") || "";
+
+  return { apiKey: process.env.SHOPIFY_API_KEY || "", host };
 };
 
 export default function App() {
