@@ -1,15 +1,45 @@
 // app/routes/app.xexpress.create.tsx
-import type { ActionFunctionArgs } from "react-router";
-import prisma from "../db.server";
-import shopify from "../shopify.server";
+import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
+import { useEffect } from "react";
+import { useFetcher, useLoaderData } from "react-router";
+import { boundary } from "@shopify/shopify-app-react-router/server";
 import { createXExpressClient } from "../utils/xexpress.client";
 
+export async function loader({ request }: LoaderFunctionArgs) {
+  const [{ default: prisma }, { default: shopify }] = await Promise.all([
+    import("../db.server"),
+    import("../shopify.server"),
+  ]);
+
+  const { session } = await shopify.authenticate.admin(request);
+  const shop = session.shop;
+
+  const url = new URL(request.url);
+  const host = url.searchParams.get("host") || "";
+
+  const config = await prisma.shopConfig.findUnique({ where: { shop } });
+
+  return { hasConfig: Boolean(config?.xUsername && config?.xPassword), host };
+}
+
 export async function action({ request }: ActionFunctionArgs) {
+  const [{ default: prisma }, { default: shopify }] = await Promise.all([
+    import("../db.server"),
+    import("../shopify.server"),
+  ]);
+
   const { admin, session } = await shopify.authenticate.admin(request);
   const shop = session.shop;
 
-  const body = await request.json().catch(() => null);
-  const orderId = body?.orderId as string | undefined;
+  let orderId: string | undefined;
+  const contentType = request.headers.get("content-type") ?? "";
+  if (contentType.includes("application/json")) {
+    const body = await request.json().catch(() => null);
+    orderId = body?.orderId as string | undefined;
+  } else {
+    const form = await request.formData();
+    orderId = (form.get("orderId") as string) || undefined;
+  }
 
   if (!orderId) {
     return Response.json({ error: "orderId missing" }, { status: 400 });
@@ -23,7 +53,6 @@ export async function action({ request }: ActionFunctionArgs) {
     );
   }
 
-  // 1. Učitaj order iz Shopify Admin API
   const orderRes = await admin.rest.get({
     path: `orders/${orderId}`,
   });
@@ -39,7 +68,6 @@ export async function action({ request }: ActionFunctionArgs) {
     );
   }
 
-  // 2. Konfiguracija klijenta prema env
   const client = createXExpressClient({
     username: config.xUsername,
     password: config.xPassword,
@@ -49,8 +77,7 @@ export async function action({ request }: ActionFunctionArgs) {
         : "test",
   });
 
-  // 3. PosiljkaDto – minimalna mapa
-  const sifraExt = order.name; // npr #1001
+  const sifraExt = order.name;
 
   const shipmentDto = {
     sifraExt,
@@ -78,7 +105,6 @@ export async function action({ request }: ActionFunctionArgs) {
     kontaktPos: config.senderContact ?? "",
   };
 
-  // 4. Poziv X-Express /najava/v2
   const apiRes = await client.post("/najava/v2", [shipmentDto], {
     params: { rezervacija: false },
   });
@@ -87,7 +113,6 @@ export async function action({ request }: ActionFunctionArgs) {
   const detail = payload?.PosiljkeDetaljno?.[0];
   const sifra = detail?.sifra as string | undefined;
 
-  // 5. Spremi u Shipment tabelu
   await prisma.shipment.create({
     data: {
       shop,
@@ -107,4 +132,79 @@ export async function action({ request }: ActionFunctionArgs) {
   });
 }
 
-export default null;
+export const headers = (headersArgs: any) => boundary.headers(headersArgs);
+export async function documentHeaderTemplate(...args: any[]) {
+  const { addDocumentResponseHeaders } = await import("../shopify.server");
+  return addDocumentResponseHeaders(...args);
+}
+
+export default function CreateShipmentPage() {
+  const { hasConfig, host } = useLoaderData() as { hasConfig: boolean; host?: string };
+  const fetcher = useFetcher();
+
+  useEffect(() => {
+    if (fetcher.state === "idle" && fetcher.data?.shipmentCode) {
+      window?.shopify?.toast?.show?.(
+        `Shipment created: ${fetcher.data.shipmentCode}`
+      );
+    }
+  }, [fetcher.state, fetcher.data]);
+
+  return (
+    <s-page heading="Create X-Express shipment">
+      <s-section>
+        {!hasConfig && (
+          <s-inline-stack spacing="tight" alignment="start">
+            <s-text tone="critical">
+              Configure your X-Express credentials first.
+            </s-text>
+            <s-button
+              variant="primary"
+              onClick={() => {
+                const url = new URL("/app/xexpress/settings", window.location.origin);
+                if (host) {
+                  url.searchParams.set("host", host);
+                }
+
+                if (window?.shopify?.redirect?.to) {
+                  window.shopify.redirect.to({ url: url.toString() });
+                  return;
+                }
+
+                window.location.assign(url.toString());
+              }}
+            >
+              Go to settings
+            </s-button>
+          </s-inline-stack>
+        )}
+
+        <fetcher.Form method="post">
+          <s-stack spacing="base">
+            <s-text-field
+              name="orderId"
+              label="Shopify order ID"
+              placeholder="e.g. 1234567890"
+              required
+            />
+            <s-button
+              variant="primary"
+              submit
+              {...(fetcher.state === "submitting" ? { loading: true } : {})}
+            >
+              Create shipment
+            </s-button>
+            {fetcher.data?.error && (
+              <s-text tone="critical">{fetcher.data.error}</s-text>
+            )}
+            {fetcher.data?.shipmentCode && (
+              <s-text tone="success">
+                Shipment created with code {fetcher.data.shipmentCode}
+              </s-text>
+            )}
+          </s-stack>
+        </fetcher.Form>
+      </s-section>
+    </s-page>
+  );
+}
