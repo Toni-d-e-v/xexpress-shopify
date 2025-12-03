@@ -1,15 +1,15 @@
 import { useEffect } from "react";
-import { useFetcher } from "react-router";
-import { useAppBridge } from "@shopify/app-bridge-react";
+import { useFetcher, useNavigate } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
-import { authenticate } from "../shopify.server";
 
 export const loader = async ({ request }) => {
+  const { authenticate } = await import("../shopify.server");
   await authenticate.admin(request);
   return null;
 };
 
 export const action = async ({ request }) => {
+  const { authenticate } = await import("../shopify.server");
   await authenticate.admin(request);
 
   // Ovdje bi u budućnosti mogli dodati "test shipment" action
@@ -18,16 +18,29 @@ export const action = async ({ request }) => {
 
 export default function XExpressHome() {
   const fetcher = useFetcher();
-  const shopify = useAppBridge();
+  const navigate = useNavigate();
 
 
   useEffect(() => {
     if (fetcher.data?.ok) {
-      shopify.toast.show("Test successful");
+      window?.shopify?.toast?.show?.("Test successful");
     }
-  }, [fetcher.data, shopify]);
+  }, [fetcher.data]);
 
   const runTest = () => fetcher.submit({}, { method: "POST" });
+
+  const goTo = (event, url) => {
+    if (event?.preventDefault) {
+      event.preventDefault();
+    }
+
+    if (window?.shopify?.redirect?.to) {
+      window.shopify.redirect.to({ url });
+      return;
+    }
+
+    navigate(url);
+  };
 
   return (
     <s-page heading="X-Express Shipping">
@@ -41,11 +54,11 @@ export default function XExpressHome() {
         </s-paragraph>
 
         <s-stack direction="inline" gap="base">
-          <s-button onClick={() => (window.location.href = "/app/xexpress/settings")}>
+          <s-button onClick={(event) => goTo(event, "/app/xexpress/settings")}>
             Settings
           </s-button>
 
-          <s-button onClick={() => (window.location.href = "/app/xexpress/create")}>
+          <s-button onClick={(event) => goTo(event, "/app/xexpress/create")}>
             Create Shipment
           </s-button>
 
@@ -73,10 +86,20 @@ export default function XExpressHome() {
       <s-section slot="aside" heading="Quick Links">
         <s-unordered-list>
           <s-list-item>
-            <s-link href="/app/xexpress/settings">API Settings</s-link>
+            <s-link
+              href="/app/xexpress/settings"
+              onClick={(event) => goTo(event, "/app/xexpress/settings")}
+            >
+              API Settings
+            </s-link>
           </s-list-item>
           <s-list-item>
-            <s-link href="/app/xexpress/create">Create Shipment</s-link>
+            <s-link
+              href="/app/xexpress/create"
+              onClick={(event) => goTo(event, "/app/xexpress/create")}
+            >
+              Create Shipment
+            </s-link>
           </s-list-item>
           <s-list-item>
             <s-link
