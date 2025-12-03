@@ -1,8 +1,10 @@
-import { Link, Outlet, useLoaderData, useNavigate, useRouteError } from "react-router";
+import { Outlet, useLoaderData, useRouteError } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import {
   AppProvider as AppBridgeProvider,
 } from "@shopify/shopify-app-react-router/react";
+
+import { addDocumentResponseHeaders, authenticate } from "../shopify.server";
 
 export const loader = async ({ request }) => {
   const { authenticate } = await import("../shopify.server");
@@ -15,41 +17,18 @@ export default function App() {
   const { apiKey } = useLoaderData();
   const navigate = useNavigate();
 
-  const goTo = (event, url) => {
-    if (event?.preventDefault) {
-      event.preventDefault();
-    }
-
-    const absoluteUrl = new URL(url, window.location.origin).toString();
-
-    if (window?.shopify?.redirect?.to) {
-      window.shopify.redirect.to({ url: absoluteUrl });
-      return;
-    }
-
-    navigate(url);
-  };
-
   return (
     <AppBridgeProvider apiKey={apiKey} isEmbeddedApp>
-      <ui-nav-menu>
-        <Link prefetch="intent" to="/app" onClick={(event) => goTo(event, "/app")}>Home</Link>
-        <Link
-          prefetch="intent"
-          to="/app/xexpress/settings"
-          onClick={(event) => goTo(event, "/app/xexpress/settings")}
-        >
-          Settings
-        </Link>
-        <Link
-          prefetch="intent"
-          to="/app/xexpress/create"
-          onClick={(event) => goTo(event, "/app/xexpress/create")}
-        >
-          Create shipment
-        </Link>
-      </ui-nav-menu>
-      <Outlet />
+      <s-page>
+        <s-section>
+          <s-stack direction="inline" gap="base" alignment="center">
+            <s-text variant="headingLg">X-Express</s-text>
+            <s-spacer></s-spacer>
+            <Link to="/app/xexpress/settings">Settings</Link>
+          </s-stack>
+        </s-section>
+        <Outlet />
+      </s-page>
     </AppBridgeProvider>
   );
 }
@@ -59,7 +38,4 @@ export function ErrorBoundary() {
 }
 
 export const headers = (headersArgs) => boundary.headers(headersArgs);
-export async function documentHeaderTemplate(...args) {
-  const { addDocumentResponseHeaders } = await import("../shopify.server");
-  return addDocumentResponseHeaders(...args);
-}
+export const documentHeaderTemplate = addDocumentResponseHeaders;

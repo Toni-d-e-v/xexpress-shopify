@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useFetcher, useNavigate } from "react-router";
+import { useFetcher } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 
 export const loader = async ({ request }) => {
@@ -18,7 +18,6 @@ export const action = async ({ request }) => {
 
 export default function XExpressHome() {
   const fetcher = useFetcher();
-  const navigate = useNavigate();
 
 
   useEffect(() => {
@@ -29,19 +28,13 @@ export default function XExpressHome() {
 
   const runTest = () => fetcher.submit({}, { method: "POST" });
 
-  const goTo = (event, url) => {
-    if (event?.preventDefault) {
-      event.preventDefault();
-    }
-
-    const absoluteUrl = new URL(url, window.location.origin).toString();
-
+  const navigate = (url) => {
     if (window?.shopify?.redirect?.to) {
-      window.shopify.redirect.to({ url: absoluteUrl });
+      window.shopify.redirect.to({ url });
       return;
     }
 
-    navigate(url);
+    window.location.href = url;
   };
 
   return (
@@ -56,11 +49,11 @@ export default function XExpressHome() {
         </s-paragraph>
 
         <s-stack direction="inline" gap="base">
-          <s-button onClick={(event) => goTo(event, "/app/xexpress/settings")}>
+          <s-button onClick={() => navigate("/app/xexpress/settings")}> 
             Settings
           </s-button>
 
-          <s-button onClick={(event) => goTo(event, "/app/xexpress/create")}>
+          <s-button onClick={() => navigate("/app/xexpress/create")}> 
             Create Shipment
           </s-button>
 
@@ -90,7 +83,7 @@ export default function XExpressHome() {
           <s-list-item>
             <s-link
               href="/app/xexpress/settings"
-              onClick={(event) => goTo(event, "/app/xexpress/settings")}
+              onClick={(event) => navigate(event, "/app/xexpress/settings")}
             >
               API Settings
             </s-link>
@@ -98,7 +91,7 @@ export default function XExpressHome() {
           <s-list-item>
             <s-link
               href="/app/xexpress/create"
-              onClick={(event) => goTo(event, "/app/xexpress/create")}
+              onClick={(event) => navigate(event, "/app/xexpress/create")}
             >
               Create Shipment
             </s-link>

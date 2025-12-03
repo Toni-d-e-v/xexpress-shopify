@@ -1,16 +1,12 @@
 // app/routes/app.xexpress.create.tsx
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
-import { useEffect } from "react";
 import { useFetcher, useLoaderData } from "react-router";
-import { boundary } from "@shopify/shopify-app-react-router/server";
+import { useEffect } from "react";
+import prisma from "../db.server";
+import shopify from "../shopify.server";
 import { createXExpressClient } from "../utils/xexpress.client";
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const [{ default: prisma }, { default: shopify }] = await Promise.all([
-    import("../db.server"),
-    import("../shopify.server"),
-  ]);
-
   const { session } = await shopify.authenticate.admin(request);
   const shop = session.shop;
 
@@ -20,11 +16,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 export async function action({ request }: ActionFunctionArgs) {
-  const [{ default: prisma }, { default: shopify }] = await Promise.all([
-    import("../db.server"),
-    import("../shopify.server"),
-  ]);
-
   const { admin, session } = await shopify.authenticate.admin(request);
   const shop = session.shop;
 
@@ -129,12 +120,6 @@ export async function action({ request }: ActionFunctionArgs) {
   });
 }
 
-export const headers = (headersArgs: any) => boundary.headers(headersArgs);
-export async function documentHeaderTemplate(...args: any[]) {
-  const { addDocumentResponseHeaders } = await import("../shopify.server");
-  return addDocumentResponseHeaders(...args);
-}
-
 export default function CreateShipmentPage() {
   const { hasConfig } = useLoaderData() as { hasConfig: boolean };
   const fetcher = useFetcher();
@@ -157,15 +142,11 @@ export default function CreateShipmentPage() {
             </s-text>
             <s-button
               variant="primary"
-              onClick={() => {
-                const url = new URL("/app/xexpress/settings", window.location.origin).toString();
-                if (window?.shopify?.redirect?.to) {
-                  window.shopify.redirect.to({ url });
-                  return;
-                }
-
-                window.location.assign(url);
-              }}
+              onClick={() =>
+                window?.shopify?.redirect?.to
+                  ? window.shopify.redirect.to({ url: "/app/xexpress/settings" })
+                  : (window.location.href = "/app/xexpress/settings")
+              }
             >
               Go to settings
             </s-button>
