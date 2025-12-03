@@ -15,6 +15,7 @@ export const loader = async ({ request }) => {
 
 export default function App() {
   const { apiKey } = useLoaderData();
+  const navigate = useNavigate();
 
   return (
     <AppBridgeProvider apiKey={apiKey} isEmbeddedApp>

@@ -111,3 +111,7 @@ export default function XExpressHome() {
 }
 
 export const headers = (headersArgs) => boundary.headers(headersArgs);
+export async function documentHeaderTemplate(...args) {
+  const { addDocumentResponseHeaders } = await import("../shopify.server");
+  return addDocumentResponseHeaders(...args);
+}
