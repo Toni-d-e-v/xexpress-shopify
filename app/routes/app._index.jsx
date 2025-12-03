@@ -34,8 +34,10 @@ export default function XExpressHome() {
       event.preventDefault();
     }
 
+    const absoluteUrl = new URL(url, window.location.origin).toString();
+
     if (window?.shopify?.redirect?.to) {
-      window.shopify.redirect.to({ url });
+      window.shopify.redirect.to({ url: absoluteUrl });
       return;
     }
 
@@ -116,3 +118,7 @@ export default function XExpressHome() {
 }
 
 export const headers = (headersArgs) => boundary.headers(headersArgs);
+export async function documentHeaderTemplate(...args) {
+  const { addDocumentResponseHeaders } = await import("../shopify.server");
+  return addDocumentResponseHeaders(...args);
+}

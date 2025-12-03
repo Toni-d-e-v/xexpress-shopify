@@ -130,6 +130,10 @@ export async function action({ request }: ActionFunctionArgs) {
 }
 
 export const headers = (headersArgs: any) => boundary.headers(headersArgs);
+export async function documentHeaderTemplate(...args: any[]) {
+  const { addDocumentResponseHeaders } = await import("../shopify.server");
+  return addDocumentResponseHeaders(...args);
+}
 
 export default function CreateShipmentPage() {
   const { hasConfig } = useLoaderData() as { hasConfig: boolean };
@@ -153,11 +157,15 @@ export default function CreateShipmentPage() {
             </s-text>
             <s-button
               variant="primary"
-              onClick={() =>
-                window?.shopify?.redirect?.to
-                  ? window.shopify.redirect.to({ url: "/app/xexpress/settings" })
-                  : (window.location.href = "/app/xexpress/settings")
-              }
+              onClick={() => {
+                const url = new URL("/app/xexpress/settings", window.location.origin).toString();
+                if (window?.shopify?.redirect?.to) {
+                  window.shopify.redirect.to({ url });
+                  return;
+                }
+
+                window.location.assign(url);
+              }}
             >
               Go to settings
             </s-button>

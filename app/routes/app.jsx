@@ -1,4 +1,4 @@
-import { Outlet, useLoaderData, useNavigate, useRouteError } from "react-router";
+import { Link, Outlet, useLoaderData, useNavigate, useRouteError } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import {
   AppProvider as AppBridgeProvider,
@@ -20,8 +20,10 @@ export default function App() {
       event.preventDefault();
     }
 
+    const absoluteUrl = new URL(url, window.location.origin).toString();
+
     if (window?.shopify?.redirect?.to) {
-      window.shopify.redirect.to({ url });
+      window.shopify.redirect.to({ url: absoluteUrl });
       return;
     }
 
@@ -31,9 +33,21 @@ export default function App() {
   return (
     <AppBridgeProvider apiKey={apiKey} isEmbeddedApp>
       <ui-nav-menu>
-        <a href="/app" onClick={(event) => goTo(event, "/app")}>Home</a>
-        <a href="/app/xexpress/settings" onClick={(event) => goTo(event, "/app/xexpress/settings")}>Settings</a>
-        <a href="/app/xexpress/create" onClick={(event) => goTo(event, "/app/xexpress/create")}>Create shipment</a>
+        <Link prefetch="intent" to="/app" onClick={(event) => goTo(event, "/app")}>Home</Link>
+        <Link
+          prefetch="intent"
+          to="/app/xexpress/settings"
+          onClick={(event) => goTo(event, "/app/xexpress/settings")}
+        >
+          Settings
+        </Link>
+        <Link
+          prefetch="intent"
+          to="/app/xexpress/create"
+          onClick={(event) => goTo(event, "/app/xexpress/create")}
+        >
+          Create shipment
+        </Link>
       </ui-nav-menu>
       <Outlet />
     </AppBridgeProvider>
