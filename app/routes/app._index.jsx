@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useFetcher, useLoaderData, Link } from "react-router";
+import { useFetcher, useLoaderData, useNavigate } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 
 export const loader = async ({ request }) => {
@@ -23,7 +23,7 @@ export const action = async ({ request }) => {
 export default function XExpressHome() {
   const { host } = useLoaderData() ?? { host: "" };
   const fetcher = useFetcher();
-
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (fetcher.data?.ok) {
@@ -45,13 +45,13 @@ export default function XExpressHome() {
         </s-paragraph>
 
         <s-stack direction="inline" gap="base">
-          <Link to="/app/xexpress/settings" style={{ textDecoration: 'none' }}>
-            <s-button>Settings</s-button>
-          </Link>
+          <s-button onClick={() => navigate("/app/xexpress/settings")}>
+            Settings
+          </s-button>
 
-          <Link to="/app/xexpress/create" style={{ textDecoration: 'none' }}>
-            <s-button>Create Shipment</s-button>
-          </Link>
+          <s-button onClick={() => navigate("/app/xexpress/create")}>
+            Create Shipment
+          </s-button>
 
           <s-button onClick={runTest} variant="tertiary" {...(fetcher.state === "submitting" ? { loading: true } : {})}>
             Run test
@@ -77,14 +77,14 @@ export default function XExpressHome() {
       <s-section slot="aside" heading="Quick Links">
         <s-unordered-list>
           <s-list-item>
-            <Link to="/app/xexpress/settings" style={{ textDecoration: 'none' }}>
-              <s-text>API Settings</s-text>
-            </Link>
+            <s-button variant="plain" onClick={() => navigate("/app/xexpress/settings")}>
+              API Settings
+            </s-button>
           </s-list-item>
           <s-list-item>
-            <Link to="/app/xexpress/create" style={{ textDecoration: 'none' }}>
-              <s-text>Create Shipment</s-text>
-            </Link>
+            <s-button variant="plain" onClick={() => navigate("/app/xexpress/create")}>
+              Create Shipment
+            </s-button>
           </s-list-item>
           <s-list-item>
             <s-link
