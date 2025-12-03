@@ -7,6 +7,11 @@ import shopify from "../shopify.server";
 
 // Loader – učita konfiguraciju
 export async function loader({ request }: LoaderFunctionArgs) {
+  const [{ default: prisma }, { default: shopify }] = await Promise.all([
+    import("../db.server"),
+    import("../shopify.server"),
+  ]);
+
   const { session } = await shopify.authenticate.admin(request);
   const shop = session.shop;
 
@@ -19,6 +24,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 // Action – spremi konfiguraciju
 export async function action({ request }: ActionFunctionArgs) {
+  const [{ default: prisma }, { default: shopify }] = await Promise.all([
+    import("../db.server"),
+    import("../shopify.server"),
+  ]);
+
   const { session } = await shopify.authenticate.admin(request);
   const shop = session.shop;
 
@@ -151,3 +161,5 @@ export default function XExpressSettingsPage() {
     </s-page>
   );
 }
+
+export const headers = (headersArgs: any) => boundary.headers(headersArgs);
