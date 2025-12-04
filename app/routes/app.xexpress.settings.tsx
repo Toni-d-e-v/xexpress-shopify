@@ -108,19 +108,22 @@ export default function XExpressSettingsPage() {
             <s-stack spacing="extraTight">
               <s-text variant="bodyMd" fontWeight="semibold">Environment</s-text>
               <s-choice-list
-                value={formState.environment}
+                name="environment-choice"
                 onChange={(event: any) => {
                   const value = event?.detail?.value?.[0] || "test";
                   setFormState((prev) => ({ ...prev, environment: value }));
                 }}
               >
-                <s-choice value="test" checked={formState.environment === "test"}>
+                <s-choice value="test" selected={formState.environment === "test"}>
                   Test
                 </s-choice>
-                <s-choice value="prod" checked={formState.environment === "prod"}>
+                <s-choice value="prod" selected={formState.environment === "prod"}>
                   Production
                 </s-choice>
               </s-choice-list>
+              <s-text variant="bodySm" tone="subdued">
+                Current: {formState.environment === "prod" ? "Production" : "Test"}
+              </s-text>
             </s-stack>
           </s-stack>
 
