@@ -6,5 +6,5 @@ handle = "xexpress-order-action"
 type = "ui_extension"
 
 [[extensions.targeting]]
-module = "./src/index.jsx"
+module = "./src/ActionExtension.jsx"
 target = "admin.order-details.action.render"
