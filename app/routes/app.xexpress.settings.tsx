@@ -110,7 +110,7 @@ export default function XExpressSettingsPage() {
   };
 
   const handleEnvironmentChange = (event: any) => {
-    const value = event?.detail?.value?.[0] || "test";
+    const value = event.target.value;
     console.log("Environment changed to:", value);
     setFormState((prev) => {
       const newState = { ...prev, environment: value };
@@ -148,19 +148,37 @@ export default function XExpressSettingsPage() {
             <s-stack spacing="base">
               <s-text variant="headingSm">Environment</s-text>
               <s-box padding="400" background="bg-surface-secondary" borderRadius="200">
-                <s-stack spacing="tight">
-                  <input type="hidden" name="environment" value={formState.environment} />
-                  <s-choice-list
-                    name="environment-display"
-                    onChange={handleEnvironmentChange}
-                  >
-                    <s-choice value="test" selected={formState.environment === "test"}>
-                      Test Environment
-                    </s-choice>
-                    <s-choice value="prod" selected={formState.environment === "prod"}>
-                      Production Environment
-                    </s-choice>
-                  </s-choice-list>
+                <s-stack spacing="base">
+                  <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                    <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", padding: "8px", borderRadius: "4px", backgroundColor: formState.environment === "test" ? "rgba(0, 128, 96, 0.1)" : "transparent" }}>
+                      <input
+                        type="radio"
+                        name="environment"
+                        value="test"
+                        checked={formState.environment === "test"}
+                        onChange={handleEnvironmentChange}
+                        style={{ width: "18px", height: "18px", cursor: "pointer" }}
+                      />
+                      <span style={{ fontSize: "14px", fontWeight: formState.environment === "test" ? "600" : "400" }}>
+                        🧪 Test Environment
+                      </span>
+                    </label>
+
+                    <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", padding: "8px", borderRadius: "4px", backgroundColor: formState.environment === "prod" ? "rgba(142, 31, 11, 0.1)" : "transparent" }}>
+                      <input
+                        type="radio"
+                        name="environment"
+                        value="prod"
+                        checked={formState.environment === "prod"}
+                        onChange={handleEnvironmentChange}
+                        style={{ width: "18px", height: "18px", cursor: "pointer" }}
+                      />
+                      <span style={{ fontSize: "14px", fontWeight: formState.environment === "prod" ? "600" : "400" }}>
+                        🚀 Production Environment
+                      </span>
+                    </label>
+                  </div>
+
                   <s-banner tone={formState.environment === "prod" ? "warning" : "info"}>
                     <s-text variant="bodySm" fontWeight="semibold">
                       Currently selected: {formState.environment === "prod" ? "Production" : "Test"}
