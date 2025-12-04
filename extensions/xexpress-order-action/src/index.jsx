@@ -2,7 +2,10 @@ import {
   reactExtension,
   useApi,
   useOrder,
+  AdminAction,
+  Button,
 } from "@shopify/ui-extensions-react/admin";
+import { useState } from "react";
 
 export default reactExtension(
   "admin.order-details.action.render",
@@ -12,31 +15,42 @@ export default reactExtension(
 function XExpressButton() {
   const api = useApi();
   const order = useOrder();
+  const [loading, setLoading] = useState(false);
 
   const createShipment = async () => {
-    await api.fetch("/apps/xexpress/api.xexpress.create", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ orderId: order.id }),
-    });
+    try {
+      setLoading(true);
+      const response = await api.fetch("/api.xexpress.create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId: order.id }),
+      });
 
-    api.toast.show("X-Express shipment created");
+      const data = await response.json();
+
+      if (data.ok) {
+        api.toast.show("X-Express shipment created successfully", {
+          isError: false,
+        });
+      } else {
+        api.toast.show(data.error || "Failed to create shipment", {
+          isError: true,
+        });
+      }
+    } catch (error) {
+      api.toast.show("Error creating shipment", { isError: true });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <button
-      onClick={createShipment}
-      style={{
-        padding: "8px 12px",
-        borderRadius: "6px",
-        border: "none",
-        cursor: "pointer",
-        background: "#2563eb",
-        color: "white",
-        fontSize: "14px",
-      }}
-    >
-      Create X-Express shipment
-    </button>
+    <AdminAction
+      primaryAction={
+        <Button onPress={createShipment} loading={loading}>
+          Create X-Express Shipment
+        </Button>
+      }
+    />
   );
 }
