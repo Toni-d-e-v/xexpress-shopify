@@ -27,7 +27,7 @@ function Extension() {
       console.log("[Extension] shopify.authenticatedFetch available:", typeof shopify.authenticatedFetch);
 
       // Use authenticatedFetch for proper Shopify session handling
-      const response = await shopify.authenticatedFetch("/api.xexpress.create", {
+      const response = await shopify.authenticatedFetch("/api/xexpress/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
