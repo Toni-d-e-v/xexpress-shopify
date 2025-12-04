@@ -1,0 +1,10 @@
+api_version = "2025-10"
+
+[[extensions]]
+name = "t:name"
+handle = "xexpress-order-action"
+type = "ui_extension"
+
+[[extensions.targeting]]
+module = "./src/index.jsx"
+target = "admin.order-details.action.render"
