@@ -23,6 +23,9 @@ function Extension() {
       setLoading(true);
       setError(null);
 
+      console.log("[Extension] Starting shipment creation for order:", orderId);
+      console.log("[Extension] shopify.authenticatedFetch available:", typeof shopify.authenticatedFetch);
+
       // Use authenticatedFetch for proper Shopify session handling
       const response = await shopify.authenticatedFetch("/api.xexpress.create", {
         method: "POST",
@@ -32,12 +35,25 @@ function Extension() {
         body: JSON.stringify({ orderId }),
       });
 
+      console.log("[Extension] Response status:", response.status);
+      console.log("[Extension] Response ok:", response.ok);
+
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: "Network error" }));
+        const errorText = await response.text();
+        console.error("[Extension] Error response:", errorText);
+
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { error: `HTTP ${response.status}: ${errorText}` };
+        }
+
         throw new Error(errorData.error || `HTTP ${response.status}`);
       }
 
       const result = await response.json();
+      console.log("[Extension] Success result:", result);
 
       if (result.ok) {
         shopify.toast.show(
@@ -49,7 +65,7 @@ function Extension() {
         throw new Error(result.error || "Failed to create shipment");
       }
     } catch (err) {
-      console.error("Error creating shipment:", err);
+      console.error("[Extension] Error creating shipment:", err);
       const errorMessage = err.message || "Error creating shipment";
       setError(errorMessage);
       shopify.toast.show(errorMessage, { isError: true, duration: 5000 });
