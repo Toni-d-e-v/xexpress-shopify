@@ -17,114 +17,172 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 export async function action({ request }: ActionFunctionArgs) {
-  const { admin, session } = await shopify.authenticate.admin(request);
-  const shop = session.shop;
+  try {
+    const { admin, session } = await shopify.authenticate.admin(request);
+    const shop = session.shop;
 
-  let orderId: string | undefined;
-  const contentType = request.headers.get("content-type") ?? "";
-  if (contentType.includes("application/json")) {
-    const body = await request.json().catch(() => null);
-    orderId = body?.orderId as string | undefined;
-  } else {
-    const form = await request.formData();
-    orderId = (form.get("orderId") as string) || undefined;
-  }
+    let orderId: string | undefined;
+    const contentType = request.headers.get("content-type") ?? "";
+    if (contentType.includes("application/json")) {
+      const body = await request.json().catch(() => null);
+      orderId = body?.orderId as string | undefined;
+    } else {
+      const form = await request.formData();
+      orderId = (form.get("orderId") as string) || undefined;
+    }
 
-  if (!orderId) {
-    return Response.json({ error: "orderId missing" }, { status: 400 });
-  }
+    if (!orderId) {
+      return Response.json({ error: "orderId missing" }, { status: 400 });
+    }
 
-  // Extract numeric ID from GraphQL GID format
-  // e.g., "gid://shopify/Order/123456789" -> "123456789"
-  if (orderId.includes("gid://shopify/Order/")) {
-    orderId = orderId.split("/").pop();
-  }
+    // Extract numeric ID from GraphQL GID format
+    // e.g., "gid://shopify/Order/123456789" -> "123456789"
+    if (orderId.includes("gid://shopify/Order/")) {
+      orderId = orderId.split("/").pop();
+    }
 
-  const config = await prisma.shopConfig.findUnique({ where: { shop } });
-  if (!config || !config.xUsername || !config.xPassword) {
-    return Response.json(
-      { error: "X-Express not configured for this shop" },
-      { status: 400 }
-    );
-  }
+    const config = await prisma.shopConfig.findUnique({ where: { shop } });
+    if (!config || !config.xUsername || !config.xPassword) {
+      return Response.json(
+        { error: "X-Express not configured for this shop" },
+        { status: 400 }
+      );
+    }
 
-  const orderRes = await admin.rest.get({
-    path: `orders/${orderId}`,
-  });
+    // Fetch order from Shopify
+    let orderRes;
+    try {
+      orderRes = await admin.rest.get({
+        path: `orders/${orderId}`,
+      });
+    } catch (err) {
+      console.error("Failed to fetch order from Shopify:", err);
+      return Response.json(
+        { error: `Order not found or inaccessible: ${orderId}` },
+        { status: 404 }
+      );
+    }
 
-  // @ts-ignore – Shopify SDK response typing
-  const order = orderRes.body.order;
+    // @ts-ignore – Shopify SDK response typing
+    const order = orderRes.body.order;
 
-  const shipping = order.shipping_address;
-  if (!shipping) {
-    return Response.json(
-      { error: "Order has no shipping address" },
-      { status: 400 }
-    );
-  }
+    if (!order) {
+      return Response.json({ error: "Order not found" }, { status: 404 });
+    }
 
-  const client = createXExpressClient({
-    username: config.xUsername,
-    password: config.xPassword,
-    env:
-      (config.environment as "prod" | "test") === "prod"
-        ? "prod"
-        : "test",
-  });
+    // Validate shipping address
+    const shipping = order.shipping_address;
+    if (!shipping || !shipping.address1 || !shipping.zip) {
+      return Response.json(
+        { error: "Order is missing required shipping address information" },
+        { status: 400 }
+      );
+    }
 
-  const sifraExt = order.name;
+    const client = createXExpressClient({
+      username: config.xUsername,
+      password: config.xPassword,
+      env:
+        (config.environment as "prod" | "test") === "prod"
+          ? "prod"
+          : "test",
+    });
 
-  const shipmentDto = {
-    sifraExt,
-    uslugaSifra: 1,
-    opisPosiljke: order.line_items.map((i: any) => i.name).join(", "),
-    tezina: 2,
-    duzina: 20,
-    sirina: 20,
-    visina: 20,
-    obveznikPlacanja: 1,
-    nacinPlacanja: 1,
-    brojPaketa: 1,
-    vrednostPosiljke: Number(order.total_price),
+    const sifraExt = order.name || `Order-${order.id}`;
 
-    nazivPrim: shipping.name,
-    adresaPrim: shipping.address1,
-    pttPrim: shipping.zip,
-    telefonPrim: shipping.phone ?? "000000000",
-    kontaktPrim: shipping.name,
-
-    nazivPos: config.senderName ?? shop,
-    adresaPos: config.senderAddress ?? "",
-    pttPos: config.senderPostal ?? "",
-    telefonPos: config.senderPhone ?? "",
-    kontaktPos: config.senderContact ?? "",
-  };
-
-  const apiRes = await client.post("/najava/v2", [shipmentDto], {
-    params: { rezervacija: false },
-  });
-
-  const payload = apiRes.data?.[0];
-  const detail = payload?.PosiljkeDetaljno?.[0];
-  const sifra = detail?.sifra as string | undefined;
-
-  await prisma.shipment.create({
-    data: {
-      shop,
-      orderId: String(order.id),
-      orderName: order.name ?? String(order.id),
+    const shipmentDto = {
       sifraExt,
-      sifra: sifra ?? null,
-      status: payload?.Status ?? null,
-      trackingRaw: payload ?? {},
-    } as any,
-  });
+      uslugaSifra: 1,
+      opisPosiljke: order.line_items?.length
+        ? order.line_items.map((i: any) => i.name).join(", ")
+        : "Order items",
+      tezina: 2,
+      duzina: 20,
+      sirina: 20,
+      visina: 20,
+      obveznikPlacanja: 1,
+      nacinPlacanja: 1,
+      brojPaketa: 1,
+      vrednostPosiljke: Number(order.total_price) || 0,
 
-  return Response.json({
-    ok: true,
-    shipmentCode: sifra,
-    xexpress: payload,
-  });
+      nazivPrim: shipping.name || "Customer",
+      adresaPrim: shipping.address1,
+      pttPrim: shipping.zip,
+      telefonPrim: shipping.phone || "000000000",
+      kontaktPrim: shipping.name || "Customer",
+
+      nazivPos: config.senderName || shop,
+      adresaPos: config.senderAddress || "",
+      pttPos: config.senderPostal || "",
+      telefonPos: config.senderPhone || "",
+      kontaktPos: config.senderContact || "",
+    };
+
+    // Create shipment with X-Express
+    let xexpressResponse;
+    try {
+      xexpressResponse = await client.post("/najava/v2", [shipmentDto], {
+        params: { rezervacija: false },
+      });
+    } catch (err: any) {
+      console.error("X-Express API error:", err);
+      const errorMsg =
+        err.response?.data?.message ||
+        err.message ||
+        "Failed to create shipment with X-Express";
+      return Response.json({ error: errorMsg }, { status: 500 });
+    }
+
+    const payload = xexpressResponse.data?.[0];
+    const sifra = payload?.PosiljkeDetaljno?.[0]?.sifra as string | undefined;
+
+    if (!sifra) {
+      console.error("No shipment code returned:", payload);
+      return Response.json(
+        {
+          error: "X-Express did not return a shipment code. Please check your configuration.",
+          xexpress: payload,
+        },
+        { status: 500 }
+      );
+    }
+
+    // Save to database
+    try {
+      await prisma.shipment.create({
+        data: {
+          shop,
+          orderId: String(order.id),
+          orderName: order.name || String(order.id),
+          sifraExt,
+          sifra: sifra,
+          status: payload?.Status || null,
+          trackingRaw: payload || {},
+        } as any,
+      });
+    } catch (dbErr) {
+      console.error("Database error:", dbErr);
+      // Shipment was created but not saved - still return success with warning
+      return Response.json({
+        ok: true,
+        shipmentCode: sifra,
+        warning: "Shipment created but database save failed",
+        xexpress: payload,
+      });
+    }
+
+    return Response.json({
+      ok: true,
+      shipmentCode: sifra,
+      xexpress: payload,
+    });
+  } catch (error: any) {
+    console.error("Unexpected error in create shipment:", error);
+    return Response.json(
+      { error: error.message || "An unexpected error occurred" },
+      { status: 500 }
+    );
+  }
 }
 
 export default function CreateShipmentPage() {
