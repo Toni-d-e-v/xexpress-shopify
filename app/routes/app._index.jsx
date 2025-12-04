@@ -1,35 +1,31 @@
 import { useEffect } from "react";
-import { useFetcher, useLoaderData, useNavigate } from "react-router";
+import { useFetcher, useLoaderData } from "react-router";
+import { useAppBridge } from "@shopify/app-bridge-react";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 
 export const loader = async ({ request }) => {
   const { authenticate } = await import("../shopify.server");
   await authenticate.admin(request);
 
-  const url = new URL(request.url);
-  const host = url.searchParams.get("host") || "";
-
-  return { host };
+  return null;
 };
 
 export const action = async ({ request }) => {
   const { authenticate } = await import("../shopify.server");
   await authenticate.admin(request);
 
-  // Ovdje bi u budućnosti mogli dodati "test shipment" action
   return { ok: true };
 };
 
 export default function XExpressHome() {
-  const { host } = useLoaderData() ?? { host: "" };
   const fetcher = useFetcher();
-  const navigate = useNavigate();
+  const shopify = useAppBridge();
 
   useEffect(() => {
     if (fetcher.data?.ok) {
-      window?.shopify?.toast?.show?.("Test successful");
+      shopify.toast.show("Test successful");
     }
-  }, [fetcher.data]);
+  }, [fetcher.data, shopify]);
 
   const runTest = () => fetcher.submit({}, { method: "POST" });
 
@@ -45,13 +41,13 @@ export default function XExpressHome() {
         </s-paragraph>
 
         <s-stack direction="inline" gap="base">
-          <s-button onClick={() => navigate("/app/xexpress/settings")}>
-            Settings
-          </s-button>
+          <s-link href="/app/xexpress/settings">
+            <s-button>Settings</s-button>
+          </s-link>
 
-          <s-button onClick={() => navigate("/app/xexpress/create")}>
-            Create Shipment
-          </s-button>
+          <s-link href="/app/xexpress/create">
+            <s-button>Create Shipment</s-button>
+          </s-link>
 
           <s-button onClick={runTest} variant="tertiary" {...(fetcher.state === "submitting" ? { loading: true } : {})}>
             Run test
@@ -61,30 +57,30 @@ export default function XExpressHome() {
 
       <s-section heading="How it works">
         <s-paragraph>
-          • Sync order details → send to X-Express API  
+          • Sync order details → send to X-Express API
         </s-paragraph>
         <s-paragraph>
-          • Generate and print labels inside Shopify  
+          • Generate and print labels inside Shopify
         </s-paragraph>
         <s-paragraph>
-          • Store tracking numbers on the order  
+          • Store tracking numbers on the order
         </s-paragraph>
         <s-paragraph>
-          • Auto-notify customers via X-Express  
+          • Auto-notify customers via X-Express
         </s-paragraph>
       </s-section>
 
       <s-section slot="aside" heading="Quick Links">
         <s-unordered-list>
           <s-list-item>
-            <s-button variant="plain" onClick={() => navigate("/app/xexpress/settings")}>
+            <s-link href="/app/xexpress/settings">
               API Settings
-            </s-button>
+            </s-link>
           </s-list-item>
           <s-list-item>
-            <s-button variant="plain" onClick={() => navigate("/app/xexpress/create")}>
+            <s-link href="/app/xexpress/create">
               Create Shipment
-            </s-button>
+            </s-link>
           </s-list-item>
           <s-list-item>
             <s-link

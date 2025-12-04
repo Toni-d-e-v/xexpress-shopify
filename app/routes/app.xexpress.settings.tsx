@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useFetcher, useLoaderData } from "react-router";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
+import { useAppBridge } from "@shopify/app-bridge-react";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 
 import prisma from "../db.server";
@@ -59,6 +60,7 @@ export async function action({ request }: ActionFunctionArgs) {
 export default function XExpressSettingsPage() {
   const { config } = useLoaderData() as any;
   const fetcher = useFetcher();
+  const shopify = useAppBridge();
 
   const [formState, setFormState] = useState({
     xUsername: config?.xUsername ?? "",
@@ -73,9 +75,9 @@ export default function XExpressSettingsPage() {
 
   useEffect(() => {
     if (fetcher.state === "idle" && fetcher.data?.success) {
-      window?.shopify?.toast?.show?.("Settings saved");
+      shopify.toast.show("Settings saved");
     }
-  }, [fetcher.state, fetcher.data]);
+  }, [fetcher.state, fetcher.data, shopify]);
 
   const handleChange = (field: string) => (event: any) => {
     const value = event?.target?.value ?? "";
