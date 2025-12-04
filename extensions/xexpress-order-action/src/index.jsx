@@ -2,20 +2,30 @@ import { render } from "preact";
 import { useState } from "preact/hooks";
 
 export default async () => {
-  console.log("[Extension] Initializing");
-  render(<Extension />, document.body);
+  console.log("[Extension] Step 1: Initializing");
+
+  try {
+    console.log("[Extension] Step 2: About to render");
+    const result = render(<Extension />, document.body);
+    console.log("[Extension] Step 3: Render returned:", result);
+  } catch (err) {
+    console.error("[Extension] Step 3 ERROR:", err);
+  }
 };
 
 function Extension() {
-  console.log("[Extension] Component rendering");
+  console.log("[Extension] Step 4: Component function called");
 
   const [loading, setLoading] = useState(false);
+
+  console.log("[Extension] Step 5: State initialized");
+
   const orderId = shopify?.data?.selected?.[0]?.id || "";
-  const orderNumber = orderId ? String(orderId).split("/").pop() : "";
+  const orderNum = orderId.split("/").pop() || "Unknown";
 
-  console.log("[Extension] Order ID:", orderId);
+  console.log("[Extension] Step 6: Order ID:", orderId);
 
-  async function handleCreate() {
+  const handleClick = async () => {
     console.log("[Extension] Button clicked");
 
     if (!orderId) {
@@ -25,56 +35,55 @@ function Extension() {
 
     try {
       setLoading(true);
-      console.log("[Extension] Calling API");
+      console.log("[Extension] Fetching...");
 
-      const response = await shopify.authenticatedFetch("/api/xexpress/create", {
+      const res = await shopify.authenticatedFetch("/api/xexpress/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ orderId }),
       });
 
-      console.log("[Extension] Response:", response.status);
+      console.log("[Extension] Response:", res.status);
 
-      if (!response.ok) {
-        const text = await response.text();
-        console.error("[Extension] Error:", text);
+      if (!res.ok) {
+        const text = await res.text();
         let data;
         try {
           data = JSON.parse(text);
         } catch {
-          data = { error: `HTTP ${response.status}` };
+          data = { error: `HTTP ${res.status}` };
         }
-        throw new Error(data.error || "Request failed");
+        throw new Error(data.error || "Failed");
       }
 
-      const result = await response.json();
-      console.log("[Extension] Success:", result);
+      const result = await res.json();
+      console.log("[Extension] Result:", result);
 
       if (result.ok) {
-        shopify.toast.show(`Shipment: ${result.shipmentCode}`, { duration: 5000 });
+        shopify.toast.show(`Shipment: ${result.shipmentCode}`);
         shopify.close();
       } else {
         throw new Error(result.error || "Failed");
       }
     } catch (err) {
       console.error("[Extension] Error:", err);
-      shopify.toast.show(err.message || "Error", { isError: true, duration: 5000 });
+      shopify.toast.show(err.message, { isError: true });
     } finally {
       setLoading(false);
     }
-  }
+  };
+
+  console.log("[Extension] Step 7: About to return JSX");
 
   return (
     <s-admin-action>
       <s-stack direction="block">
         <s-text variant="headingMd">X-Express Shipping</s-text>
-        <s-text>Create shipment for order {orderNumber}?</s-text>
+        <s-text>Create shipment for order {orderNum}?</s-text>
       </s-stack>
-
-      <s-button slot="primary-action" onClick={handleCreate} disabled={loading}>
+      <s-button slot="primary-action" onClick={handleClick} disabled={loading}>
         {loading ? "Creating..." : "Create Shipment"}
       </s-button>
-
       <s-button slot="secondary-actions" onClick={() => shopify.close()}>
         Cancel
       </s-button>
