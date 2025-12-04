@@ -5,8 +5,7 @@ export default async () => {
 };
 
 function Extension() {
-  const { data, close } = shopify;
-  const orderId = data?.selected?.[0]?.id;
+  const orderId = shopify.data?.selected?.[0]?.id;
 
   async function createShipment() {
     if (!orderId) {
@@ -33,7 +32,7 @@ function Extension() {
       if (result.ok) {
         loadingToast.hide();
         shopify.toast.show(`Shipment created: ${result.shipmentCode}`, { duration: 5000 });
-        close();
+        shopify.close();
       } else {
         throw new Error(result.error || "Failed to create shipment");
       }
@@ -46,11 +45,14 @@ function Extension() {
     }
   }
 
+  function handleCancel() {
+    shopify.close();
+  }
+
   return (
     <s-admin-action>
       <s-stack direction="block">
         <s-text variant="headingMd">X-Express Shipping</s-text>
-
         {orderId ? (
           <s-text>Create X-Express shipment for this order?</s-text>
         ) : (
@@ -62,7 +64,7 @@ function Extension() {
         Create Shipment
       </s-button>
 
-      <s-button slot="secondary-actions" onClick={close}>
+      <s-button slot="secondary-actions" onClick={handleCancel}>
         Cancel
       </s-button>
     </s-admin-action>
