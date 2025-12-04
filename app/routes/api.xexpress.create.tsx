@@ -12,19 +12,26 @@ export async function action({ request }: any) {
     orderId = orderId.split("/").pop();
   }
 
-  const shop = await prisma.shop.findFirst();
-  if (!shop) return json({ error: "Shop not configured" }, { status: 400 });
+  // Fetch Shopify order via Admin API and get shop domain
+  const { admin, session } = await shopify.authenticate.admin(request);
+  const shopDomain = session.shop;
 
-  // Fetch Shopify order via Admin API
-  const { admin } = await shopify.authenticate.admin(request);
+  const config = await prisma.shopConfig.findUnique({
+    where: { shop: shopDomain },
+  });
+
+  if (!config || !config.xUsername || !config.xPassword) {
+    return json({ error: "X-Express not configured" }, { status: 400 });
+  }
+
   const orderRes = await admin.rest.get({ path: `orders/${orderId}` });
   // @ts-ignore
   const order = orderRes.body.order;
 
   const client = createXExpressClient({
-    username: shop.xUsername!,
-    password: shop.xPassword!,
-    env: (shop.xEnvironment as "test" | "prod") ?? "test",
+    username: config.xUsername,
+    password: config.xPassword,
+    env: (config.environment as "test" | "prod") === "prod" ? "prod" : "test",
   });
 
   const shipmentDto = {
@@ -46,11 +53,11 @@ export async function action({ request }: any) {
     telefonPrim: order.shipping_address?.phone ?? "000000000",
     kontaktPrim: order.shipping_address?.name,
 
-    nazivPos: shop.senderName,
-    adresaPos: shop.senderAddress,
-    pttPos: shop.senderPostal,
-    telefonPos: shop.senderPhone,
-    kontaktPos: shop.senderContact,
+    nazivPos: config.senderName ?? shopDomain,
+    adresaPos: config.senderAddress ?? "",
+    pttPos: config.senderPostal ?? "",
+    telefonPos: config.senderPhone ?? "",
+    kontaktPos: config.senderContact ?? "",
   };
 
   const response = await client.post("/najava/v2", [shipmentDto]);
@@ -58,7 +65,7 @@ export async function action({ request }: any) {
 
   await prisma.shipment.create({
     data: {
-      shopId: shop.id,
+      shop: shopDomain,
       orderId: String(order.id),
       orderName: order.name,
       sifraExt: shipmentDto.sifraExt,
