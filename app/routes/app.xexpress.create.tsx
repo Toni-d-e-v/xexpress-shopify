@@ -1,7 +1,8 @@
 // app/routes/app.xexpress.create.tsx
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
-import { useFetcher, useLoaderData, useNavigate } from "react-router";
+import { useFetcher, useLoaderData } from "react-router";
 import { useEffect } from "react";
+import { useAppBridge } from "@shopify/app-bridge-react";
 import prisma from "../db.server";
 import shopify from "../shopify.server";
 import { createXExpressClient } from "../utils/xexpress.client";
@@ -123,15 +124,13 @@ export async function action({ request }: ActionFunctionArgs) {
 export default function CreateShipmentPage() {
   const { hasConfig } = useLoaderData() as { hasConfig: boolean };
   const fetcher = useFetcher();
-  const navigate = useNavigate();
+  const shopify = useAppBridge();
 
   useEffect(() => {
     if (fetcher.state === "idle" && fetcher.data?.shipmentCode) {
-      window?.shopify?.toast?.show?.(
-        `Shipment created: ${fetcher.data.shipmentCode}`
-      );
+      shopify.toast.show(`Shipment created: ${fetcher.data.shipmentCode}`);
     }
-  }, [fetcher.state, fetcher.data]);
+  }, [fetcher.state, fetcher.data, shopify]);
 
   return (
     <s-page heading="Create X-Express shipment">
@@ -141,9 +140,11 @@ export default function CreateShipmentPage() {
             <s-text tone="critical">
               Configure your X-Express credentials first.
             </s-text>
-            <s-button variant="primary" onClick={() => navigate("/app/xexpress/settings")}>
-              Go to settings
-            </s-button>
+            <s-link href="/app/xexpress/settings">
+              <s-button variant="primary">
+                Go to settings
+              </s-button>
+            </s-link>
           </s-inline-stack>
         )}
 
