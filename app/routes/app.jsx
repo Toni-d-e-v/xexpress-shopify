@@ -1,4 +1,4 @@
-import { Outlet, useLoaderData, useRouteError, Link } from "react-router";
+import { Outlet, useLoaderData, useRouteError, useNavigate } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import {
   AppProvider as AppBridgeProvider,
@@ -16,6 +16,7 @@ export const loader = async ({ request }) => {
 
 export default function App() {
   const { apiKey } = useLoaderData();
+  const navigate = useNavigate();
 
   return (
     <AppBridgeProvider apiKey={apiKey} isEmbeddedApp>
@@ -24,9 +25,9 @@ export default function App() {
           <s-stack direction="inline" gap="base" alignment="center">
             <s-text variant="headingLg">X-Express</s-text>
             <s-spacer></s-spacer>
-            <Link to="/app/xexpress/settings" style={{ textDecoration: 'none' }}>
-              <s-text>Settings</s-text>
-            </Link>
+            <s-button variant="plain" onClick={() => navigate("/app/xexpress/settings")}>
+              Settings
+            </s-button>
           </s-stack>
         </s-section>
         <Outlet />

@@ -1,6 +1,6 @@
 // app/routes/app.xexpress.create.tsx
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
-import { useFetcher, useLoaderData, Link } from "react-router";
+import { useFetcher, useLoaderData, useNavigate } from "react-router";
 import { useEffect } from "react";
 import prisma from "../db.server";
 import shopify from "../shopify.server";
@@ -123,6 +123,7 @@ export async function action({ request }: ActionFunctionArgs) {
 export default function CreateShipmentPage() {
   const { hasConfig } = useLoaderData() as { hasConfig: boolean };
   const fetcher = useFetcher();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (fetcher.state === "idle" && fetcher.data?.shipmentCode) {
@@ -140,11 +141,9 @@ export default function CreateShipmentPage() {
             <s-text tone="critical">
               Configure your X-Express credentials first.
             </s-text>
-            <Link to="/app/xexpress/settings" style={{ textDecoration: 'none' }}>
-              <s-button variant="primary">
-                Go to settings
-              </s-button>
-            </Link>
+            <s-button variant="primary" onClick={() => navigate("/app/xexpress/settings")}>
+              Go to settings
+            </s-button>
           </s-inline-stack>
         )}
 
