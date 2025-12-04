@@ -53,8 +53,7 @@ export async function action({ request }: ActionFunctionArgs) {
     update: data,
   });
 
-  // Ovo je OK jer fetcher neće izgubiti session
-  return Response.json({ success: true });
+  return Response.json({ success: true, config: data });
 }
 
 export default function XExpressSettingsPage() {
@@ -73,6 +72,23 @@ export default function XExpressSettingsPage() {
     senderContact: config?.senderContact ?? "",
   });
 
+  // Sync formState with config when it changes
+  useEffect(() => {
+    if (config) {
+      setFormState({
+        xUsername: config.xUsername ?? "",
+        xPassword: config.xPassword ?? "",
+        environment: config.environment ?? "test",
+        senderName: config.senderName ?? "",
+        senderAddress: config.senderAddress ?? "",
+        senderPostal: config.senderPostal ?? "",
+        senderPhone: config.senderPhone ?? "",
+        senderContact: config.senderContact ?? "",
+      });
+    }
+  }, [config]);
+
+  // Show toast when saved
   useEffect(() => {
     if (fetcher.state === "idle" && fetcher.data?.success) {
       shopify.toast.show("Settings saved");
@@ -82,6 +98,11 @@ export default function XExpressSettingsPage() {
   const handleChange = (field: string) => (event: any) => {
     const value = event?.target?.value ?? "";
     setFormState((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleEnvironmentChange = (event: any) => {
+    const value = event?.detail?.value?.[0] || "test";
+    setFormState((prev) => ({ ...prev, environment: value }));
   };
 
   return (
@@ -104,15 +125,13 @@ export default function XExpressSettingsPage() {
               onInput={handleChange("xPassword")}
               required
             />
-            <input type="hidden" name="environment" value={formState.environment} />
+
             <s-stack spacing="extraTight">
               <s-text variant="bodyMd" fontWeight="semibold">Environment</s-text>
+              <input type="hidden" name="environment" value={formState.environment} />
               <s-choice-list
-                name="environment-choice"
-                onChange={(event: any) => {
-                  const value = event?.detail?.value?.[0] || "test";
-                  setFormState((prev) => ({ ...prev, environment: value }));
-                }}
+                name="environment-display"
+                onChange={handleEnvironmentChange}
               >
                 <s-choice value="test" selected={formState.environment === "test"}>
                   Test
@@ -122,7 +141,7 @@ export default function XExpressSettingsPage() {
                 </s-choice>
               </s-choice-list>
               <s-text variant="bodySm" tone="subdued">
-                Current: {formState.environment === "prod" ? "Production" : "Test"}
+                Selected: {formState.environment === "prod" ? "Production" : "Test"}
               </s-text>
             </s-stack>
           </s-stack>
