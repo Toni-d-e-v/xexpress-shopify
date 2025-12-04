@@ -121,85 +121,133 @@ export default function XExpressSettingsPage() {
 
   return (
     <s-page heading="X-Express Settings">
-      <s-section heading="API credentials">
+      <s-section>
         <fetcher.Form method="post">
-          <s-stack spacing="large">
+          <s-stack spacing="extraLarge">
             {/* API Credentials Group */}
-            <s-stack spacing="base">
-              <s-text variant="headingSm">API Credentials</s-text>
-              <s-text-field
-                name="xUsername"
-                label="Username"
-                value={formState.xUsername}
-                onInput={handleChange("xUsername")}
-                required
-              />
-              <s-text-field
-                name="xPassword"
-                type="password"
-                label="Password"
-                value={formState.xPassword}
-                onInput={handleChange("xPassword")}
-                required
-              />
+            <s-stack spacing="large">
+              <s-stack spacing="tight">
+                <s-text variant="headingLg">API Credentials</s-text>
+                <s-text variant="bodySm" tone="subdued">
+                  Configure your X-Express API access
+                </s-text>
+              </s-stack>
+
+              <s-stack spacing="base">
+                <s-text-field
+                  name="xUsername"
+                  label="Username"
+                  value={formState.xUsername}
+                  onInput={handleChange("xUsername")}
+                  required
+                  helpText="Your X-Express API username"
+                />
+                <s-text-field
+                  name="xPassword"
+                  type="password"
+                  label="Password"
+                  value={formState.xPassword}
+                  onInput={handleChange("xPassword")}
+                  required
+                  helpText="Your X-Express API password"
+                />
+              </s-stack>
             </s-stack>
 
             {/* Environment Selection Group */}
-            <s-stack spacing="base">
-              <s-text variant="headingSm">Environment</s-text>
-              <s-box padding="400" background="bg-surface-secondary" borderRadius="200">
-                <s-stack spacing="base">
-                  <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                    <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", padding: "8px", borderRadius: "4px", backgroundColor: formState.environment === "test" ? "rgba(0, 128, 96, 0.1)" : "transparent" }}>
+            <s-stack spacing="large">
+              <s-stack spacing="tight">
+                <s-text variant="headingLg">Environment</s-text>
+                <s-text variant="bodySm" tone="subdued">
+                  Choose which X-Express environment to use for shipments
+                </s-text>
+              </s-stack>
+
+              <s-box padding="500" background="bg-surface-secondary" borderRadius="300">
+                <s-stack spacing="large">
+                  <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                    <label style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "12px",
+                      cursor: "pointer",
+                      padding: "16px",
+                      borderRadius: "8px",
+                      backgroundColor: formState.environment === "test" ? "rgba(0, 128, 96, 0.12)" : "transparent",
+                      border: formState.environment === "test" ? "2px solid rgba(0, 128, 96, 0.3)" : "2px solid transparent",
+                      transition: "all 0.2s ease"
+                    }}>
                       <input
                         type="radio"
                         name="environment"
                         value="test"
                         checked={formState.environment === "test"}
                         onChange={handleEnvironmentChange}
-                        style={{ width: "18px", height: "18px", cursor: "pointer" }}
+                        style={{ width: "20px", height: "20px", cursor: "pointer", accentColor: "#008060" }}
                       />
-                      <span style={{ fontSize: "14px", fontWeight: formState.environment === "test" ? "600" : "400" }}>
-                        🧪 Test Environment
-                      </span>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                        <span style={{ fontSize: "15px", fontWeight: formState.environment === "test" ? "600" : "400", display: "flex", alignItems: "center", gap: "8px" }}>
+                          <span style={{ fontSize: "20px" }}>🧪</span>
+                          Test Environment
+                        </span>
+                        <span style={{ fontSize: "13px", color: "#6B7280" }}>
+                          Use for testing shipments without real transactions
+                        </span>
+                      </div>
                     </label>
 
-                    <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", padding: "8px", borderRadius: "4px", backgroundColor: formState.environment === "prod" ? "rgba(142, 31, 11, 0.1)" : "transparent" }}>
+                    <label style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "12px",
+                      cursor: "pointer",
+                      padding: "16px",
+                      borderRadius: "8px",
+                      backgroundColor: formState.environment === "prod" ? "rgba(142, 31, 11, 0.12)" : "transparent",
+                      border: formState.environment === "prod" ? "2px solid rgba(142, 31, 11, 0.3)" : "2px solid transparent",
+                      transition: "all 0.2s ease"
+                    }}>
                       <input
                         type="radio"
                         name="environment"
                         value="prod"
                         checked={formState.environment === "prod"}
                         onChange={handleEnvironmentChange}
-                        style={{ width: "18px", height: "18px", cursor: "pointer" }}
+                        style={{ width: "20px", height: "20px", cursor: "pointer", accentColor: "#8E1F0B" }}
                       />
-                      <span style={{ fontSize: "14px", fontWeight: formState.environment === "prod" ? "600" : "400" }}>
-                        🚀 Production Environment
-                      </span>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                        <span style={{ fontSize: "15px", fontWeight: formState.environment === "prod" ? "600" : "400", display: "flex", alignItems: "center", gap: "8px" }}>
+                          <span style={{ fontSize: "20px" }}>🚀</span>
+                          Production Environment
+                        </span>
+                        <span style={{ fontSize: "13px", color: "#6B7280" }}>
+                          Use for real shipments with actual transactions
+                        </span>
+                      </div>
                     </label>
                   </div>
 
                   <s-banner tone={formState.environment === "prod" ? "warning" : "info"}>
-                    <s-text variant="bodySm" fontWeight="semibold">
+                    <s-text variant="bodyMd" fontWeight="semibold">
                       Currently selected: {formState.environment === "prod" ? "Production" : "Test"}
                     </s-text>
                   </s-banner>
                 </s-stack>
               </s-box>
             </s-stack>
-          </s-stack>
 
-          <s-divider spacing="large" />
+          <s-divider spacing="extraLarge" />
 
           {/* Sender Information Group */}
           <s-stack spacing="large">
-            <s-stack spacing="base">
-              <s-text variant="headingSm">Sender Information</s-text>
+            <s-stack spacing="tight">
+              <s-text variant="headingLg">Sender Information</s-text>
               <s-text variant="bodySm" tone="subdued">
-                Default sender details for X-Express shipments
+                Default sender details that will be used for all X-Express shipments
               </s-text>
+            </s-stack>
 
-              <s-stack spacing="base">
+            <s-stack spacing="base">
                 <s-text-field
                   name="senderName"
                   label="Sender name"
@@ -239,18 +287,29 @@ export default function XExpressSettingsPage() {
             </s-stack>
 
             {/* Save Button */}
-            <s-box padding="400" borderWidth="025" borderColor="border" borderRadius="200">
-              <s-inline-stack alignment="space-between" blockAlignment="center">
-                <s-text variant="bodyMd" tone="subdued">
-                  Save changes to apply new settings
-                </s-text>
+            <s-box
+              padding="500"
+              borderWidth="025"
+              borderColor="border"
+              borderRadius="300"
+              background="bg-surface"
+            >
+              <s-inline-stack alignment="space-between" blockAlignment="center" gap="large">
+                <s-stack spacing="tight">
+                  <s-text variant="bodyLg" fontWeight="semibold">
+                    Ready to save?
+                  </s-text>
+                  <s-text variant="bodySm" tone="subdued">
+                    All changes will be applied immediately
+                  </s-text>
+                </s-stack>
                 <s-button
                   type="submit"
                   variant="primary"
                   size="large"
                   {...(fetcher.state === "submitting" ? { loading: true } : {})}
                 >
-                  Save Settings
+                  {fetcher.state === "submitting" ? "Saving..." : "Save Settings"}
                 </s-button>
               </s-inline-stack>
             </s-box>
