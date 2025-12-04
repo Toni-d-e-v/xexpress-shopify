@@ -104,15 +104,24 @@ export default function XExpressSettingsPage() {
               onInput={handleChange("xPassword")}
               required
             />
-            <s-select
-              name="environment"
-              label="Environment"
-              value={formState.environment}
-              onInput={handleChange("environment")}
-            >
-              <option value="test">Test</option>
-              <option value="prod">Production</option>
-            </s-select>
+            <input type="hidden" name="environment" value={formState.environment} />
+            <s-stack spacing="extraTight">
+              <s-text variant="bodyMd" fontWeight="semibold">Environment</s-text>
+              <s-choice-list
+                value={formState.environment}
+                onChange={(event: any) => {
+                  const value = event?.detail?.value?.[0] || "test";
+                  setFormState((prev) => ({ ...prev, environment: value }));
+                }}
+              >
+                <s-choice value="test" checked={formState.environment === "test"}>
+                  Test
+                </s-choice>
+                <s-choice value="prod" checked={formState.environment === "prod"}>
+                  Production
+                </s-choice>
+              </s-choice-list>
+            </s-stack>
           </s-stack>
 
           <s-divider spacing="base" />
