@@ -34,6 +34,12 @@ export async function action({ request }: ActionFunctionArgs) {
     return Response.json({ error: "orderId missing" }, { status: 400 });
   }
 
+  // Extract numeric ID from GraphQL GID format
+  // e.g., "gid://shopify/Order/123456789" -> "123456789"
+  if (orderId.includes("gid://shopify/Order/")) {
+    orderId = orderId.split("/").pop();
+  }
+
   const config = await prisma.shopConfig.findUnique({ where: { shop } });
   if (!config || !config.xUsername || !config.xPassword) {
     return Response.json(

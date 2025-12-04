@@ -4,7 +4,13 @@ import shopify from "../shopify.server";
 
 export async function action({ request }: any) {
   const body = await request.json();
-  const { orderId } = body;
+  let { orderId } = body;
+
+  // Extract numeric ID from GraphQL GID format
+  // e.g., "gid://shopify/Order/123456789" -> "123456789"
+  if (orderId && orderId.includes("gid://shopify/Order/")) {
+    orderId = orderId.split("/").pop();
+  }
 
   const shop = await prisma.shop.findFirst();
   if (!shop) return json({ error: "Shop not configured" }, { status: 400 });
