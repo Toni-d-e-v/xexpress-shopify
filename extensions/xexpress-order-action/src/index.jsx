@@ -8,7 +8,6 @@ export default async () => {
 function Extension() {
   const { data, close } = shopify;
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
 
   // Order ID from selected order
   const orderId = data?.selected?.[0]?.id;
@@ -21,9 +20,7 @@ function Extension() {
 
     try {
       setLoading(true);
-      setError(null);
 
-      // Use authenticatedFetch for proper Shopify session handling
       const response = await shopify.authenticatedFetch("/api/xexpress/create", {
         method: "POST",
         headers: {
@@ -38,9 +35,9 @@ function Extension() {
         try {
           errorData = JSON.parse(errorText);
         } catch {
-          errorData = { error: `HTTP ${response.status}: ${errorText}` };
+          errorData = { error: `HTTP ${response.status}` };
         }
-        throw new Error(errorData.error || `HTTP ${response.status}`);
+        throw new Error(errorData.error || `Request failed`);
       }
 
       const result = await response.json();
@@ -56,7 +53,6 @@ function Extension() {
       }
     } catch (err) {
       const errorMessage = err.message || "Error creating shipment";
-      setError(errorMessage);
       shopify.toast.show(errorMessage, { isError: true, duration: 5000 });
     } finally {
       setLoading(false);
@@ -65,24 +61,19 @@ function Extension() {
 
   return (
     <s-admin-action>
-      <s-stack direction="block" spacing="base">
+      <s-stack direction="block">
         <s-text variant="headingMd">X-Express Shipping</s-text>
 
         {orderId ? (
-          <s-stack direction="block" spacing="tight">
-            <s-text>Create X-Express shipment for this order?</s-text>
-            <s-text tone="subdued" variant="bodySm">
-              Order ID: {orderId.split("/").pop()}
-            </s-text>
-          </s-stack>
+          <s-text>Create X-Express shipment for this order?</s-text>
         ) : (
           <s-text tone="critical">No order selected</s-text>
         )}
 
-        {error && (
-          <s-box background="critical" padding="base" border-radius="base">
-            <s-text tone="critical">{error}</s-text>
-          </s-box>
+        {orderId && (
+          <s-text tone="subdued" variant="bodySm">
+            Order: {orderId.split("/").pop()}
+          </s-text>
         )}
       </s-stack>
 
