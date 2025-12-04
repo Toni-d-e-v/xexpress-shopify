@@ -101,7 +101,7 @@ function Extension() {
         slot="primary-action"
         onClick={createShipment}
         disabled={!orderId || loading}
-        {...(loading ? { loading: true } : {})}
+        loading={loading}
       >
         {loading ? "Creating..." : "Create Shipment"}
       </s-button>
