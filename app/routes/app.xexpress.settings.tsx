@@ -36,6 +36,11 @@ export async function action({ request }: ActionFunctionArgs) {
 
   const form = await request.formData();
 
+  // Debug: log what we received
+  console.log("Form data received:");
+  console.log("  xUsername:", form.get("xUsername"));
+  console.log("  environment:", form.get("environment"));
+
   const data = {
     xUsername: (form.get("xUsername") as string) || "",
     xPassword: (form.get("xPassword") as string) || "",
@@ -47,11 +52,15 @@ export async function action({ request }: ActionFunctionArgs) {
     senderContact: (form.get("senderContact") as string) || "",
   };
 
+  console.log("Saving to database:", data);
+
   await prisma.shopConfig.upsert({
     where: { shop },
     create: { shop, ...data },
     update: data,
   });
+
+  console.log("Saved successfully");
 
   return Response.json({ success: true, config: data });
 }
@@ -102,94 +111,132 @@ export default function XExpressSettingsPage() {
 
   const handleEnvironmentChange = (event: any) => {
     const value = event?.detail?.value?.[0] || "test";
-    setFormState((prev) => ({ ...prev, environment: value }));
+    console.log("Environment changed to:", value);
+    setFormState((prev) => {
+      const newState = { ...prev, environment: value };
+      console.log("New formState:", newState);
+      return newState;
+    });
   };
 
   return (
     <s-page heading="X-Express Settings">
       <s-section heading="API credentials">
         <fetcher.Form method="post">
-          <s-stack spacing="base">
-            <s-text-field
-              name="xUsername"
-              label="Username"
-              value={formState.xUsername}
-              onInput={handleChange("xUsername")}
-              required
-            />
-            <s-text-field
-              name="xPassword"
-              type="password"
-              label="Password"
-              value={formState.xPassword}
-              onInput={handleChange("xPassword")}
-              required
-            />
+          <s-stack spacing="large">
+            {/* API Credentials Group */}
+            <s-stack spacing="base">
+              <s-text variant="headingSm">API Credentials</s-text>
+              <s-text-field
+                name="xUsername"
+                label="Username"
+                value={formState.xUsername}
+                onInput={handleChange("xUsername")}
+                required
+              />
+              <s-text-field
+                name="xPassword"
+                type="password"
+                label="Password"
+                value={formState.xPassword}
+                onInput={handleChange("xPassword")}
+                required
+              />
+            </s-stack>
 
-            <s-stack spacing="extraTight">
-              <s-text variant="bodyMd" fontWeight="semibold">Environment</s-text>
-              <input type="hidden" name="environment" value={formState.environment} />
-              <s-choice-list
-                name="environment-display"
-                onChange={handleEnvironmentChange}
-              >
-                <s-choice value="test" selected={formState.environment === "test"}>
-                  Test
-                </s-choice>
-                <s-choice value="prod" selected={formState.environment === "prod"}>
-                  Production
-                </s-choice>
-              </s-choice-list>
-              <s-text variant="bodySm" tone="subdued">
-                Selected: {formState.environment === "prod" ? "Production" : "Test"}
-              </s-text>
+            {/* Environment Selection Group */}
+            <s-stack spacing="base">
+              <s-text variant="headingSm">Environment</s-text>
+              <s-box padding="400" background="bg-surface-secondary" borderRadius="200">
+                <s-stack spacing="tight">
+                  <input type="hidden" name="environment" value={formState.environment} />
+                  <s-choice-list
+                    name="environment-display"
+                    onChange={handleEnvironmentChange}
+                  >
+                    <s-choice value="test" selected={formState.environment === "test"}>
+                      Test Environment
+                    </s-choice>
+                    <s-choice value="prod" selected={formState.environment === "prod"}>
+                      Production Environment
+                    </s-choice>
+                  </s-choice-list>
+                  <s-banner tone={formState.environment === "prod" ? "warning" : "info"}>
+                    <s-text variant="bodySm" fontWeight="semibold">
+                      Currently selected: {formState.environment === "prod" ? "Production" : "Test"}
+                    </s-text>
+                  </s-banner>
+                </s-stack>
+              </s-box>
             </s-stack>
           </s-stack>
 
-          <s-divider spacing="base" />
+          <s-divider spacing="large" />
 
-          <s-stack spacing="base">
-            <s-text-field
-              name="senderName"
-              label="Sender name"
-              value={formState.senderName}
-              onInput={handleChange("senderName")}
-            />
-            <s-text-field
-              name="senderAddress"
-              label="Sender address"
-              value={formState.senderAddress}
-              onInput={handleChange("senderAddress")}
-            />
-            <s-text-field
-              name="senderPostal"
-              label="Sender postal code"
-              value={formState.senderPostal}
-              onInput={handleChange("senderPostal")}
-            />
-            <s-text-field
-              name="senderPhone"
-              label="Sender phone"
-              value={formState.senderPhone}
-              onInput={handleChange("senderPhone")}
-            />
-            <s-text-field
-              name="senderContact"
-              label="Sender contact"
-              value={formState.senderContact}
-              onInput={handleChange("senderContact")}
-            />
+          {/* Sender Information Group */}
+          <s-stack spacing="large">
+            <s-stack spacing="base">
+              <s-text variant="headingSm">Sender Information</s-text>
+              <s-text variant="bodySm" tone="subdued">
+                Default sender details for X-Express shipments
+              </s-text>
+
+              <s-stack spacing="base">
+                <s-text-field
+                  name="senderName"
+                  label="Sender name"
+                  value={formState.senderName}
+                  onInput={handleChange("senderName")}
+                  helpText="Your company or personal name"
+                />
+                <s-text-field
+                  name="senderAddress"
+                  label="Sender address"
+                  value={formState.senderAddress}
+                  onInput={handleChange("senderAddress")}
+                  helpText="Full street address"
+                />
+                <s-text-field
+                  name="senderPostal"
+                  label="Sender postal code"
+                  value={formState.senderPostal}
+                  onInput={handleChange("senderPostal")}
+                  helpText="ZIP or postal code"
+                />
+                <s-text-field
+                  name="senderPhone"
+                  label="Sender phone"
+                  value={formState.senderPhone}
+                  onInput={handleChange("senderPhone")}
+                  helpText="Contact phone number"
+                />
+                <s-text-field
+                  name="senderContact"
+                  label="Sender contact person"
+                  value={formState.senderContact}
+                  onInput={handleChange("senderContact")}
+                  helpText="Name of contact person"
+                />
+              </s-stack>
+            </s-stack>
+
+            {/* Save Button */}
+            <s-box padding="400" borderWidth="025" borderColor="border" borderRadius="200">
+              <s-inline-stack alignment="space-between" blockAlignment="center">
+                <s-text variant="bodyMd" tone="subdued">
+                  Save changes to apply new settings
+                </s-text>
+                <s-button
+                  type="submit"
+                  variant="primary"
+                  size="large"
+                  {...(fetcher.state === "submitting" ? { loading: true } : {})}
+                >
+                  Save Settings
+                </s-button>
+              </s-inline-stack>
+            </s-box>
           </s-stack>
-
-          <s-inline-stack alignment="end" spacing="base" style={{ marginTop: "16px" }}>
-            <s-button
-              type="submit"
-              variant="primary"
-              {...(fetcher.state === "submitting" ? { loading: true } : {})}
-            >
-              Save
-            </s-button>
-          </s-inline-stack>
         </fetcher.Form>
       </s-section>
     </s-page>
