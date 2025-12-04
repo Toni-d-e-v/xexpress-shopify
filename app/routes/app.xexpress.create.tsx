@@ -140,11 +140,9 @@ export default function CreateShipmentPage() {
             <s-text tone="critical">
               Configure your X-Express credentials first.
             </s-text>
-            <s-link href="/app/xexpress/settings">
-              <s-button variant="primary">
-                Go to settings
-              </s-button>
-            </s-link>
+            <s-button variant="primary" href="/app/xexpress/settings">
+              Go to settings
+            </s-button>
           </s-inline-stack>
         )}
 
