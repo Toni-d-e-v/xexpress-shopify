@@ -307,7 +307,7 @@ export default function XExpressSettingsPage() {
                   type="submit"
                   variant="primary"
                   size="large"
-                  {...(fetcher.state === "submitting" ? { loading: true } : {})}
+                  disabled={fetcher.state === "submitting"}
                 >
                   {fetcher.state === "submitting" ? "Saving..." : "Save Settings"}
                 </s-button>

@@ -49,8 +49,8 @@ export default function XExpressHome() {
             Create Shipment
           </s-button>
 
-          <s-button onClick={runTest} variant="tertiary" {...(fetcher.state === "submitting" ? { loading: true } : {})}>
-            Run test
+          <s-button onClick={runTest} variant="tertiary" disabled={fetcher.state === "submitting"}>
+            {fetcher.state === "submitting" ? "Testing..." : "Run test"}
           </s-button>
         </s-stack>
       </s-section>

@@ -163,9 +163,9 @@ export default function CreateShipmentPage() {
             <s-button
               type="submit"
               variant="primary"
-              {...(fetcher.state === "submitting" ? { loading: true } : {})}
+              disabled={fetcher.state === "submitting"}
             >
-              Create shipment
+              {fetcher.state === "submitting" ? "Creating..." : "Create shipment"}
             </s-button>
             {fetcher.data?.error && (
               <s-text tone="critical">{fetcher.data.error}</s-text>
