@@ -41,13 +41,13 @@ export default function XExpressHome() {
         </s-paragraph>
 
         <s-stack direction="inline" gap="base">
-          <s-link href="/app/xexpress/settings">
-            <s-button>Settings</s-button>
-          </s-link>
+          <s-button href="/app/xexpress/settings">
+            Settings
+          </s-button>
 
-          <s-link href="/app/xexpress/create">
-            <s-button>Create Shipment</s-button>
-          </s-link>
+          <s-button href="/app/xexpress/create">
+            Create Shipment
+          </s-button>
 
           <s-button onClick={runTest} variant="tertiary" {...(fetcher.state === "submitting" ? { loading: true } : {})}>
             Run test
