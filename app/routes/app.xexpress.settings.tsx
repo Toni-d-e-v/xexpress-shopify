@@ -161,8 +161,8 @@ export default function XExpressSettingsPage() {
 
           <s-inline-stack alignment="end" spacing="base" style={{ marginTop: "16px" }}>
             <s-button
+              type="submit"
               variant="primary"
-              submit
               {...(fetcher.state === "submitting" ? { loading: true } : {})}
             >
               Save

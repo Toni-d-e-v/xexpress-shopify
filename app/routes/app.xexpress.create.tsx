@@ -161,8 +161,8 @@ export default function CreateShipmentPage() {
               required
             />
             <s-button
+              type="submit"
               variant="primary"
-              submit
               {...(fetcher.state === "submitting" ? { loading: true } : {})}
             >
               Create shipment
