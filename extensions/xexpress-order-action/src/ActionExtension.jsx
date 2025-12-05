@@ -16,7 +16,9 @@ function Extension() {
     const loadingToast = shopify.toast.show("Creating shipment...");
 
     try {
-      const response = await shopify.authenticatedFetch("/api/xexpress/create", {
+      // Use regular fetch() - NOT shopify.authenticatedFetch()
+      // Admin UI extensions automatically add auth headers
+      const response = await fetch("/api/xexpress/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ orderId }),
