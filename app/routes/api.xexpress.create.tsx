@@ -3,6 +3,21 @@ import prisma from "../db.server";
 import { createXExpressClient } from "../utils/xexpress.client";
 import shopify from "../shopify.server";
 
+// CORS headers for UI extensions
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "https://extensions.shopifycdn.com",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+};
+
+// Handle OPTIONS preflight
+export async function options() {
+  return new Response(null, {
+    status: 204,
+    headers: corsHeaders,
+  });
+}
+
 export async function action({ request }: any) {
   try {
     // Parse request body
@@ -11,7 +26,7 @@ export async function action({ request }: any) {
 
     // Validate orderId
     if (!orderId) {
-      return json({ error: "Order ID is required" }, { status: 400 });
+      return json({ error: "Order ID is required" }, { status: 400, headers: corsHeaders });
     }
 
     // Extract numeric ID from GraphQL GID format
@@ -32,7 +47,7 @@ export async function action({ request }: any) {
     if (!config || !config.xUsername || !config.xPassword) {
       return json(
         { error: "X-Express not configured. Please configure in Settings." },
-        { status: 400 }
+        { status: 400, headers: corsHeaders }
       );
     }
 
@@ -44,7 +59,7 @@ export async function action({ request }: any) {
       console.error("Failed to fetch order from Shopify:", err);
       return json(
         { error: `Order not found or inaccessible: ${orderId}` },
-        { status: 404 }
+        { status: 404, headers: corsHeaders }
       );
     }
 
@@ -52,7 +67,7 @@ export async function action({ request }: any) {
     const order = orderRes.body.order;
 
     if (!order) {
-      return json({ error: "Order not found" }, { status: 404 });
+      return json({ error: "Order not found" }, { status: 404, headers: corsHeaders });
     }
 
     // Validate shipping address
@@ -60,7 +75,7 @@ export async function action({ request }: any) {
     if (!shipping || !shipping.address1 || !shipping.zip) {
       return json(
         { error: "Order is missing required shipping address information" },
-        { status: 400 }
+        { status: 400, headers: corsHeaders }
       );
     }
 
@@ -112,7 +127,7 @@ export async function action({ request }: any) {
         err.response?.data?.message ||
         err.message ||
         "Failed to create shipment with X-Express";
-      return json({ error: errorMsg }, { status: 500 });
+      return json({ error: errorMsg }, { status: 500, headers: corsHeaders });
     }
 
     const created = xexpressResponse.data?.[0];
@@ -125,7 +140,7 @@ export async function action({ request }: any) {
           error: "X-Express did not return a shipment code. Please check your configuration.",
           xexpress: created,
         },
-        { status: 500 }
+        { status: 500, headers: corsHeaders }
       );
     }
 
@@ -150,6 +165,8 @@ export async function action({ request }: any) {
         shipmentCode,
         warning: "Shipment created but database save failed",
         xexpress: created,
+      }, {
+        headers: corsHeaders,
       });
     }
 
@@ -157,12 +174,14 @@ export async function action({ request }: any) {
       ok: true,
       shipmentCode,
       xexpress: created,
+    }, {
+      headers: corsHeaders,
     });
   } catch (error: any) {
     console.error("Unexpected error in create shipment:", error);
     return json(
       { error: error.message || "An unexpected error occurred" },
-      { status: 500 }
+      { status: 500, headers: corsHeaders }
     );
   }
 }
