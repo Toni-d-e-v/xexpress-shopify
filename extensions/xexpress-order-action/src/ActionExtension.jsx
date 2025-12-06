@@ -10,6 +10,16 @@ function Extension() {
   async function createShipment() {
     console.log("[DEBUG] createShipment called");
     console.log("[DEBUG] orderId:", orderId);
+    console.log("[DEBUG] window.location.href:", window.location.href);
+    console.log("[DEBUG] window.location.origin:", window.location.origin);
+    console.log("[DEBUG] window.location.pathname:", window.location.pathname);
+    console.log("[DEBUG] shopify object:", shopify);
+    console.log("[DEBUG] shopify keys:", Object.keys(shopify));
+
+    // Try to find any config or environment data
+    if (shopify.config) console.log("[DEBUG] shopify.config:", shopify.config);
+    if (shopify.environment) console.log("[DEBUG] shopify.environment:", shopify.environment);
+    if (shopify.metadata) console.log("[DEBUG] shopify.metadata:", shopify.metadata);
 
     if (!orderId) {
       try {
@@ -23,8 +33,30 @@ function Extension() {
     console.log("[DEBUG] Starting shipment creation");
 
     try {
-      // Use relative URL - Shopify automatically resolves to app backend
-      // and adds authentication headers
+      // First, test if we can reach the server at all with a simple endpoint
+      console.log("[DEBUG] Testing connectivity with GET /api/test-ping");
+      try {
+        const testGet = await fetch("/api/test-ping");
+        const testGetText = await testGet.text();
+        console.log("[DEBUG] Test GET response:", testGet.status, testGetText);
+      } catch (e) {
+        console.error("[DEBUG] Test GET failed:", e);
+      }
+
+      console.log("[DEBUG] Testing connectivity with POST /api/test-ping");
+      try {
+        const testPost = await fetch("/api/test-ping", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ test: "data", orderId })
+        });
+        const testPostText = await testPost.text();
+        console.log("[DEBUG] Test POST response:", testPost.status, testPostText);
+      } catch (e) {
+        console.error("[DEBUG] Test POST failed:", e);
+      }
+
+      // Now try the actual endpoint
       console.log("[DEBUG] About to fetch /api/xexpress/create");
 
       const response = await fetch("/api/xexpress/create", {
