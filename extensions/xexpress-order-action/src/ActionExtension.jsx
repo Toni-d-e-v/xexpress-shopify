@@ -23,18 +23,11 @@ function Extension() {
     console.log("[DEBUG] Starting shipment creation");
 
     try {
-      // Get the app URL - extensions run from extensions.shopifycdn.com
-      // so we need to construct the full URL to the app backend
-      const appUrl = window.location.origin;
-      const apiUrl = `${appUrl}/api/xexpress/create`;
+      // Use relative URL - Shopify automatically resolves to app backend
+      // and adds authentication headers
+      console.log("[DEBUG] About to fetch /api/xexpress/create");
 
-      console.log("[DEBUG] App URL:", appUrl);
-      console.log("[DEBUG] Full API URL:", apiUrl);
-      console.log("[DEBUG] About to fetch");
-
-      // Use regular fetch() - NOT shopify.authenticatedFetch()
-      // Admin UI extensions automatically add auth headers
-      const response = await fetch(apiUrl, {
+      const response = await fetch("/api/xexpress/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
