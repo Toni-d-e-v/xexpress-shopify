@@ -20,6 +20,18 @@ function Extension() {
     if (shopify.config) console.log("[DEBUG] shopify.config:", shopify.config);
     if (shopify.environment) console.log("[DEBUG] shopify.environment:", shopify.environment);
     if (shopify.metadata) console.log("[DEBUG] shopify.metadata:", shopify.metadata);
+    if (shopify.auth) console.log("[DEBUG] shopify.auth:", shopify.auth);
+
+    // Try to get session token
+    let sessionToken = null;
+    try {
+      if (shopify.auth && typeof shopify.auth.getSessionToken === 'function') {
+        sessionToken = await shopify.auth.getSessionToken();
+        console.log("[DEBUG] Got session token:", sessionToken ? "yes" : "no");
+      }
+    } catch (e) {
+      console.error("[DEBUG] Failed to get session token:", e);
+    }
 
     if (!orderId) {
       try {
@@ -56,14 +68,32 @@ function Extension() {
         console.error("[DEBUG] Test POST failed:", e);
       }
 
-      // Now try the actual endpoint
+      // Test if the actual endpoint is reachable with GET
+      console.log("[DEBUG] Testing GET /api/xexpress/create");
+      try {
+        const testActual = await fetch("/api/xexpress/create");
+        const testActualText = await testActual.text();
+        console.log("[DEBUG] GET /api/xexpress/create response:", testActual.status, testActualText);
+      } catch (e) {
+        console.error("[DEBUG] GET /api/xexpress/create failed:", e);
+      }
+
+      // Now try the actual endpoint with POST
       console.log("[DEBUG] About to fetch /api/xexpress/create");
+
+      const headers = {
+        "Content-Type": "application/json",
+      };
+
+      // Add session token if available
+      if (sessionToken) {
+        headers["Authorization"] = `Bearer ${sessionToken}`;
+        console.log("[DEBUG] Adding Authorization header with session token");
+      }
 
       const response = await fetch("/api/xexpress/create", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers,
         body: JSON.stringify({ orderId }),
       });
 

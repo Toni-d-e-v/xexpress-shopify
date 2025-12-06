@@ -5,13 +5,27 @@ import shopify from "../shopify.server";
 
 // Handle OPTIONS preflight for CORS
 export async function options() {
+  console.log("[SERVER] OPTIONS request to /api/xexpress/create");
   return new Response(null, {
     status: 204,
     headers: {
       "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
       "Access-Control-Allow-Headers": "Content-Type, Authorization",
     },
+  });
+}
+
+// Test loader to see if route is accessible
+export async function loader({ request }: any) {
+  console.log("[SERVER] GET request to /api/xexpress/create");
+  return json({
+    message: "This endpoint requires POST",
+    timestamp: new Date().toISOString()
+  }, {
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+    }
   });
 }
 
@@ -22,17 +36,35 @@ export async function action({ request }: any) {
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
   };
 
+  console.log("[SERVER] ========================================");
   console.log("[SERVER] Received request to /api/xexpress/create");
   console.log("[SERVER] Request method:", request.method);
+  console.log("[SERVER] Request URL:", request.url);
   console.log("[SERVER] Request headers:", Object.fromEntries(request.headers.entries()));
 
+  let admin, session;
+
   try {
-    // Authenticate and get CORS helper - REQUIRED for UI extensions
+    console.log("[SERVER] Attempting to authenticate...");
     const authResult = await shopify.authenticate.admin(request);
+    console.log("[SERVER] Authentication successful!");
     console.log("[SERVER] Auth result keys:", Object.keys(authResult));
 
-    const { admin, session, cors } = authResult;
+    admin = authResult.admin;
+    session = authResult.session;
+    const cors = authResult.cors;
     console.log("[SERVER] cors function available:", typeof cors);
+  } catch (authError: any) {
+    console.error("[SERVER] Authentication failed:", authError);
+    console.error("[SERVER] Auth error message:", authError.message);
+    console.error("[SERVER] Auth error stack:", authError.stack);
+    return json(
+      { error: "Authentication failed: " + authError.message },
+      { status: 401, headers: corsHeaders }
+    );
+  }
+
+  try {
 
     // Parse request body
     const body = await request.json().catch(() => ({}));
