@@ -12,12 +12,15 @@ function Extension() {
     console.log("[DEBUG] orderId:", orderId);
 
     if (!orderId) {
-      shopify.toast.show("No order selected", { isError: true });
+      try {
+        shopify.toast.show("No order selected", { isError: true });
+      } catch (e) {
+        console.error("[DEBUG] Toast error:", e);
+      }
       return;
     }
 
-    const loadingToast = shopify.toast.show("Creating shipment...");
-    console.log("[DEBUG] Loading toast shown");
+    console.log("[DEBUG] Starting shipment creation");
 
     try {
       console.log("[DEBUG] About to fetch /api/xexpress/create");
@@ -31,31 +34,52 @@ function Extension() {
       });
 
       console.log("[DEBUG] Response received:", response.status, response.statusText);
-      console.log("[DEBUG] Response headers:", response.headers);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: "Request failed" }));
         console.error("[DEBUG] Error response:", errorData);
-        throw new Error(errorData.error || `HTTP ${response.status}`);
+
+        try {
+          shopify.toast.show(errorData.error || `HTTP ${response.status}`, {
+            isError: true,
+            duration: 5000
+          });
+        } catch (e) {
+          console.error("[DEBUG] Toast error:", e);
+        }
+        return;
       }
 
       const result = await response.json();
       console.log("[DEBUG] Success result:", result);
 
       if (result.ok) {
-        loadingToast.hide();
-        shopify.toast.show(`Shipment created: ${result.shipmentCode}`, { duration: 5000 });
+        try {
+          shopify.toast.show(`Shipment created: ${result.shipmentCode}`, { duration: 5000 });
+        } catch (e) {
+          console.error("[DEBUG] Toast error:", e);
+        }
         shopify.close();
       } else {
-        throw new Error(result.error || "Failed to create shipment");
+        try {
+          shopify.toast.show(result.error || "Failed to create shipment", {
+            isError: true,
+            duration: 5000
+          });
+        } catch (e) {
+          console.error("[DEBUG] Toast error:", e);
+        }
       }
     } catch (error) {
       console.error("[DEBUG] Catch block:", error);
-      loadingToast.hide();
-      shopify.toast.show(error.message || "Error creating shipment", {
-        isError: true,
-        duration: 5000,
-      });
+      try {
+        shopify.toast.show(error.message || "Error creating shipment", {
+          isError: true,
+          duration: 5000,
+        });
+      } catch (e) {
+        console.error("[DEBUG] Toast error:", e);
+      }
     }
   }
 
