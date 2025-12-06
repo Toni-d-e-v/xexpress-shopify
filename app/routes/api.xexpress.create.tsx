@@ -95,20 +95,88 @@ export async function action({ request }: any) {
       );
     }
 
-    // Fetch order from Shopify
-    let orderRes;
+    // Fetch order from Shopify using GraphQL (more reliable with extension sessions)
+    let order;
     try {
-      orderRes = await admin.rest.get({ path: `orders/${orderId}` });
-    } catch (err) {
-      console.error("Failed to fetch order from Shopify:", err);
+      console.log("[SERVER] Fetching order from Shopify");
+      console.log("[SERVER] Original orderId from extension:", body.orderId);
+      console.log("[SERVER] Extracted numeric ID:", orderId);
+      console.log("[SERVER] Shop domain:", session.shop);
+
+      // Try GraphQL first (works better with extension auth)
+      const graphqlQuery = `
+        query getOrder($id: ID!) {
+          order(id: $id) {
+            id
+            name
+            totalPriceSet {
+              shopMoney {
+                amount
+              }
+            }
+            shippingAddress {
+              name
+              address1
+              address2
+              city
+              zip
+              phone
+            }
+            lineItems(first: 10) {
+              edges {
+                node {
+                  name
+                  quantity
+                }
+              }
+            }
+          }
+        }
+      `;
+
+      console.log("[SERVER] Trying GraphQL API with GID:", body.orderId);
+      const graphqlResponse = await admin.graphql(graphqlQuery, {
+        variables: { id: body.orderId }
+      });
+
+      const graphqlData = await graphqlResponse.json();
+      console.log("[SERVER] GraphQL response:", JSON.stringify(graphqlData, null, 2));
+
+      if (graphqlData.data?.order) {
+        // Convert GraphQL response to REST-like format
+        const gqlOrder = graphqlData.data.order;
+        order = {
+          id: orderId,
+          name: gqlOrder.name,
+          total_price: gqlOrder.totalPriceSet?.shopMoney?.amount || "0",
+          shipping_address: gqlOrder.shippingAddress ? {
+            name: gqlOrder.shippingAddress.name,
+            address1: gqlOrder.shippingAddress.address1,
+            address2: gqlOrder.shippingAddress.address2,
+            city: gqlOrder.shippingAddress.city,
+            zip: gqlOrder.shippingAddress.zip,
+            phone: gqlOrder.shippingAddress.phone,
+          } : null,
+          line_items: gqlOrder.lineItems?.edges?.map((edge: any) => ({
+            name: edge.node.name,
+            quantity: edge.node.quantity
+          })) || []
+        };
+        console.log("[SERVER] Order fetched successfully via GraphQL!");
+      } else {
+        throw new Error("Order not found in GraphQL response");
+      }
+    } catch (err: any) {
+      console.error("[SERVER] Failed to fetch order from Shopify:", err);
+      console.error("[SERVER] Error details:", {
+        message: err.message,
+        stack: err.stack
+      });
       return json(
-        { error: `Order not found or inaccessible: ${orderId}` },
+        { error: `Order not found or inaccessible: ${orderId}. Error: ${err.message}` },
         { status: 404, headers: corsHeaders }
       );
     }
-
-    // @ts-ignore – Shopify SDK response typing
-    const order = orderRes.body.order;
 
     if (!order) {
       return json({ error: "Order not found" }, { status: 404, headers: corsHeaders });
