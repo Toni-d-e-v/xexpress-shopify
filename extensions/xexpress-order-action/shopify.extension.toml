@@ -3,6 +3,7 @@ api_version = "2025-10"
 [[extensions]]
 name = "t:name"
 handle = "xexpress-order-action"
+uid = "adf4ab0d-912e-ea68-7581-aee376a2735c18da3bf1"
 type = "ui_extension"
 
 [[extensions.targeting]]
